@@ -282,6 +282,16 @@ details.opp:not(.mine){border-left:5px solid var(--cpu)}
 .sq > span{font-size:.88rem;line-height:1.4}
 .seq .coin{width:58px;height:58px;font-size:.9rem}
 .seq .arrow{width:58px;text-align:center;font-size:1.1rem;line-height:1.2;color:var(--ink2)}
+details.gl{background:var(--surface);border:1px solid var(--line);border-radius:14px;margin:8px 0}
+details.gl summary{padding:12px 14px;font-weight:700;cursor:pointer;list-style:none;display:flex}
+details.gl summary::-webkit-details-marker{display:none}
+details.gl summary::after{content:"＋";margin-left:auto;color:var(--ink2)}
+details.gl[open] summary::after{content:"－"}
+details.gl dl{margin:0;padding:0 14px 12px}
+details.gl dt{font-weight:700;margin-top:10px;color:var(--me)}
+details.gl dd{margin:2px 0 0;font-size:.9rem;line-height:1.6}
+.glbtn{display:block;width:100%;margin-top:10px;border:1.5px dashed var(--line);background:none;border-radius:12px;padding:10px;font-size:.9rem;font-weight:700;color:var(--ink2)}
+.linkbtn{border:none;background:none;padding:0;color:var(--me);font-weight:700;text-decoration:underline;font-size:inherit}
 
 </style>
 </head>
@@ -830,6 +840,7 @@ SCREENS.home = () => {
     <button class="btn block" data-go="collection"><span>コレクション</span><span class="n">${have}/${total}</span></button>
     <button class="btn block" data-act="openpackscreen"><span>パックを開ける</span>${S.packs + (free ? 1 : 0) > 0 ? `<span class="badge">${S.packs + (free ? 1 : 0)}</span>` : '<span class="muted small">勝つともらえる</span>'}</button>
     <button class="btn ghost block" data-go="howto"><span>あそびかた</span></button>
+    <button class="btn ghost block" data-go="glossary"><span>用語集</span></button>
     <button class="btn ghost block" data-go="about"><span>このプロトタイプについて</span></button>
   </div>
   <div class="panel"><div class="row"><span class="muted small">通算成績</span></div><div class="record"><span><b>${S.rec.w}</b> 勝</span><span><b>${S.rec.l}</b> 敗</span><span><b>${S.rec.d}</b> 分</span></div></div>
@@ -897,7 +908,7 @@ SCREENS.team = () => {
   <div class="slots">${[0, 1, 2, 3, 4].map(i => { const id = r[i]; if (!id) return `<div class="slot">空き</div>`; const p = PMAP[id]; const v = S.team.variants[id] === 'moment' && owns(id, 'moment') ? 'moment' : 'base'; return `<button class="slot" style="border:none" data-act="rm" data-id="${id}" aria-label="${p.name}を外す">${pcard(p, v, { unowned: !ownsAny(id) })}</button>`; }).join('')}</div>
   <p class="hint">タップで外せます。年俸の合計を100以内に。</p>
   ${shape ? `<div class="shape" style="margin-top:10px"><span>外の脅威 <span class="st">${starStr(shape.gravity)}</span></span><span>連動 <span class="st">${starStr(shape.flow)}</span></span><span>ゴール下 ${shape.crowded ? '<b style="color:var(--bad)">混み合う</b>' : 'すっきり'}</span><span>リバウンド ${shape.reb}</span><span style="grid-column:1/-1">守備：アンカー${shape.anchor}・ロックダウン${shape.lockdown}・チェイサー${shape.chaser}・スイッチ${shape.sw}</span></div>
-  <p class="hint">外の脅威が高いほどドライブやポストが通りやすく、連動が高いほどパス系の作戦が強くなります。</p>` : ''}
+  <p class="hint"><button class="linkbtn" data-act="gloss">用語の意味</button>　外の脅威が高いほどドライブやポストが通りやすく、連動が高いほどパス系の作戦が強くなります。</p>` : ''}
   ${r.filter(id => owns(id, 'moment')).map(id => `<div class="row small" style="margin-top:8px"><span>${PMAP[id].name}の特性</span><span class="sp"></span><div class="seg" style="min-width:230px"><button data-act="var" data-id="${id}" data-v="base" aria-pressed="${S.team.variants[id] !== 'moment'}">${TRAITS[PMAP[id].trait].name}</button><button data-act="var" data-id="${id}" data-v="moment" aria-pressed="${S.team.variants[id] === 'moment'}">${TRAITS[PMAP[id].moment].name}</button></div></div>`).join('')}
   </div>
   <div class="seg" style="margin:6px 0 4px"><button data-act="tb" data-v="players" aria-pressed="${tb === 'players'}">選手をえらぶ</button><button data-act="tb" data-v="deck" aria-pressed="${tb === 'deck'}">作戦カード ${deck.length}/5</button></div>
@@ -1123,6 +1134,7 @@ SCREENS.match = () => {
    ${bagsHtml(M.P)}
    ${M.P.activeSet && M.P.activeSet.turn === M.turn ? `<div class="callout">前のターンの${CARDS[M.P.activeSet.id].name}の効果が続いています</div>` : ''}
    ${teamPanel(M.P, true)}${teamPanel(M.C, false)}
+   <button class="glbtn" data-act="gloss">？ 用語の意味を調べる</button>
    ${body}
    <div style="margin-top:24px;text-align:center"><button class="back" data-act="quit">試合をやめる</button></div>
   </div>`;
@@ -1203,6 +1215,74 @@ SCREENS.result = () => {
   <div class="menu"><button class="btn go block" data-act="rematch">もう一度</button>${S.packs ? `<button class="btn primary block" data-act="openpackscreen">パックを開ける</button>` : ''}<button class="btn block" data-go="team">チームを変える</button><button class="btn ghost block" data-go="home">ホームへ</button></div></div>`;
 };
 
+
+/* ---------- glossary ---------- */
+const GLOSSARY = [
+  { cat: 'バスケットボールの基本', items: [
+    ['ポジション', '選手の主な役割。PG（ポイントガード）はボールを運んで攻撃を組み立てる司令塔、SG（シューティングガード）は外からのシュートが得意、SF（スモールフォワード）は内外どちらもこなす万能型、PF（パワーフォワード）はゴール下の力仕事と中距離、C（センター）はいちばん大きくゴール下を守る選手。'],
+    ['ゴール下（ペイント）', 'ゴールのすぐ前の、色が塗られた長方形のエリア。ここからのシュートは入りやすい。'],
+    ['ミドル', '3Pラインの内側で、ゴール下より少し離れた場所からのシュート。2点。'],
+    ['3P（スリーポイント）', '3Pラインの外から打つシュート。入れば3点だが難しい。'],
+    ['コーナー', 'コートの左右の隅。3Pラインがゴールにいちばん近く、シューターの定位置。'],
+    ['エルボー', 'フリースローラインの両端。ひじの形に見えることからこう呼ぶ。'],
+    ['スクリーン', '味方が壁になって、ボールを持つ選手のマーク（守る相手）をじゃまするプレー。'],
+    ['ヘルプ', '守備で、自分のマークを離れて味方を助けにいくこと。助けにいくと、元のマークが空いてしまう。'],
+    ['オフェンスリバウンド', '攻撃側が外れたシュートのボールを拾うこと。もう一度シュートできる。'],
+    ['ターンオーバー', 'シュートを打つ前にボールを失うこと。この攻撃は0点になる。'],
+    ['ポゼッション', '1回の攻撃のこと。このゲームでは1ターンに、自分と相手が1回ずつ攻撃する。']
+  ]},
+  { cat: '作戦カード', items: DECK_CARDS.map(id => [CARDS[id].name, ({
+    pnr: '味方がボールを持つ選手のためにスクリーンをかけ、そのあとゴールへ走る（ロール）か、外へ開いて3Pを狙う（ポップ）。スクリーンをかける選手がローラーならロール、スペーサーならポップになる。',
+    dk: 'ボールを持つ選手がゴールへ切り込み（ドライブ）、守備が集まったところで外の味方にパス（キック）して3Pを打たせる。',
+    iso: '1人の選手にボールを任せて、1対1で勝負させる。',
+    post: 'ゴール下で相手に背を向けてボールを受け、体の強さで押し込む。',
+    cs: 'パスを受けてすぐにシュート（キャッチ&シュート）。ボールがよく回るチームほど強い。',
+    back: '外で守る相手の背中側（裏）へ走り込み、パスを受けてゴール下で決める。',
+    ho: 'ボールを持った長身選手が、走ってきた味方にボールを手渡し、そのまま壁になる。',
+    q3: '守備が整う前に、すばやく3Pを打つ。',
+    fiveout: '5人全員が3Pラインの外に広がり、空いたゴール下へドライブする。',
+    horns: '2人の長身選手を左右のエルボーに立たせる形。角（ホーン）のように見えることからこう呼ぶ。'
+  })[id]]).concat([['ACTION と SET', 'ACTIONはその場で攻める作戦。SETはチームの形を変える作戦で、使った次のターンにも効果が残る。']]) },
+  { cat: '選手の能力', items: [
+    ['シュート', '外からのシュートのうまさ。3Pやキャッチ&シュートで使う。'],
+    ['突破', 'ドライブで相手を抜き、ゴール下で決める力。'],
+    ['パス', 'パスのうまさ。ピック&ロールやホーンズの起点で使うほか、プレスでボールを奪われにくくなる。'],
+    ['守備', '1対1で相手を止める力。'],
+    ['リバウンド', '外れたシュートを拾う力。上位2人の合計がリバウンド争いに使われる。'],
+    ['スタミナ', '疲れにくさ。高いほど体力が減りにくい。'],
+    ['S〜D', '能力の評価。Sがいちばん高く、A・B・C・Dの順に低くなる。']
+  ]},
+  { cat: '選手のタグ', items: Object.values(TAG_INFO).map(t => [t.name, t.desc + '。']) },
+  { cat: '特性', items: Object.values(TRAITS).map(t => [t.name, t.desc + '。']) },
+  { cat: '守りの方針', items: STANCE_IDS.map(id => [STANCES[id].name, STANCES[id].desc]) },
+  { cat: 'ゲームのしくみ', items: [
+    ['起点', 'その作戦で最初にボールを持って動き出す選手。起点になると体力が大きく減る。'],
+    ['相手役', '作戦によって必要になる2人目の選手。スクリーンをかける選手、パスを受ける選手など。'],
+    ['シュートの質', '作戦・選手・チームの形・相手の守備などの合計点で決まる。6以上がオープン、3〜5がコンテスト、1〜2がタフ、0以下はターンオーバー。ここに運は入らない。'],
+    ['オープン', 'フリーで打てる、いちばん良いシュート。'],
+    ['コンテスト', '相手に手を伸ばされながら打つシュート。'],
+    ['タフ', '体勢が悪く、入りにくいシュート。'],
+    ['チップ袋', 'シュートが入るかどうかを決める袋。オープン・コンテスト・タフの3種類があり、成功と失敗のチップが入っている。引いたチップは戻らないので、外れが続くと残りは当たりが多くなる。空になると元の中身に戻る。'],
+    ['読まれ度', '同じ作戦をどれだけ相手に読まれているか。使うと2増え、使わなかったターンの終わりに1減る。シュートの質から読まれ度の分だけ引かれる。'],
+    ['外の脅威', 'チームの外からのシュートの怖さ（★1〜5）。高いと守備が外に広がり、ドライブやゴール下の攻撃が通りやすくなる。'],
+    ['連動', 'チームのボールの回りやすさ（★1〜5）。高いとキャッチ&シュートやハンドオフなど、パス系の作戦が強くなる。'],
+    ['ゴール下が混み合う', 'ローラーやシュートの苦手な選手が3人以上いる状態。ドライブやポストアップが−1される。'],
+    ['流れゲージ', '得点するか、相手を0点に抑えると自分の側に1つ動く。端まで行くと「流れ」に乗り、次の攻撃が+2される。'],
+    ['体力', '試合中に減っていく値。40を切ると疲労状態になり、能力が1下がって、守備タグも効かなくなる。'],
+    ['タイムアウト', '1試合に1回。相手の守備が明かされたあとに、起点と相手役を変えられる。全員の体力も20回復する。'],
+    ['最後の攻撃権', '試合開始時に決まる。持っている側は第6ターンで、相手の攻撃結果を見てから自分の攻め方を選べる。'],
+    ['クラッチターン', '第6ターン以降のこと。クラッチなどの特性が働く。'],
+    ['延長', '第6ターン終了時に同点なら、1ターンずつ延長する（最大3回）。'],
+    ['年俸', '選手の給料。5人の合計を100以内に収める。'],
+    ['スカウト', '持っていない選手を試合に借りること。持っている選手と強さは同じ。'],
+    ['モーメント版', 'レアなカード。能力は同じで、特性だけが別のものに変わる。']
+  ]}
+];
+function glossaryHtml(open) {
+  return GLOSSARY.map(g => `<details class="gl" ${open ? 'open' : ''}><summary>${g.cat}</summary><dl>${g.items.map(([t, d]) => `<dt>${t}</dt><dd>${d}</dd>`).join('')}</dl></details>`).join('');
+}
+SCREENS.glossary = () => `<div class="wrap">${topBar('用語集')}<p class="muted small">見出しをタップすると開きます。</p>${glossaryHtml(false)}</div>`;
+
 SCREENS.howto = () => `<div class="wrap howto">${topBar('あそびかた')}
 <p>あなたはヘッドコーチ。選手を直接は動かしません。5人の組み合わせと作戦で、相手の守備にズレを作ります。</p>
 <h3>1. チームを作る</h3><p>年俸の合計が100以内になるように5人を選びます。高い選手ばかりは集められません。安くても、組み合わせ次第で光る選手がいます。</p>
@@ -1213,7 +1293,7 @@ SCREENS.howto = () => `<div class="wrap howto">${topBar('あそびかた')}
 <h3>4. シュートの質とチップ袋</h3><p>作戦と守備の相性、読まれ度などでシュートの質が「オープン・コンテスト・タフ」に決まります。ここに運は入りません。</p><p>成否はそれぞれの袋からチップを引いて決めます。引いたチップは戻らないので、外れが続けば、残りは当たりが濃くなります。袋の中身はいつでも見られます。</p>
 <h3>5. 流れ・タイムアウト・最後の攻撃</h3><p>得点や守備の成功で流れゲージが動き、端まで行くと次の攻撃が+2。タイムアウトは1試合1回。相手の守備を見たあとに、起点と相手役を変えられます。</p><p>試合の最初に「最後の攻撃権」がどちらにあるか決まります。持っている側は第6ターンで、相手の結果を見てから攻め方を選べます。</p>
 <h3>ヒント</h3><p>ヒント表示ありにすると、相手の守備ごとに自分の攻撃がどうなるか、相手の最善手が何かが見えます。慣れたらヒントなしにすると、もっと読み合いになります。</p>
-<div class="menu" style="margin-top:20px"><button class="btn go block" data-go="team">試合をする</button></div></div>`;
+<div class="menu" style="margin-top:20px"><button class="btn go block" data-go="team">試合をする</button><button class="btn ghost block" data-go="glossary">用語集を見る</button></div></div>`;
 
 SCREENS.about = () => `<div class="wrap howto">${topBar('このプロトタイプについて')}
 <p>既存のデジタル選手カードのコレクションに「集めたカードで考えて戦う」遊びを追加する、という提案のための試作版です。登場する選手・クラブはすべて架空です。</p>
@@ -1254,6 +1334,7 @@ app.addEventListener('click', ev => {
   const a = t.dataset.act, id = t.dataset.id, v = t.dataset.v;
   switch (a) {
     case 'closemodal': modal = null; render(); break;
+    case 'gloss': modal = { html: `<h2 style="margin-bottom:8px">用語集</h2>${glossaryHtml(false)}` }; render(); break;
     case 'detail': modal = { html: detailHtml(id, v) }; render(); break;
     case 'cf': UI.cf = v; render(); break;
     case 'pf': UI.pf = v; render(); break;
