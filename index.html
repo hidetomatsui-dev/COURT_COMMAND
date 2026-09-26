@@ -1,0 +1,1295 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>COURT COMMAND（コートコマンド）｜5人制バスケットボール戦略カードゲーム</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#EAF0FB;--surface:#FFFFFF;--surface2:#DCE5F7;--ink:#0E1733;--ink2:#4A5678;--line:#C3CFE8;
+  --amber:#C98400;--amberbg:#FFE7A8;--me:#2F6BFF;--cpu:#E0413B;
+  --wood:#DCA869;--wood2:#C99155;--courtline:#FFF8EC;
+  --open:#15803D;--cont:#B45309;--tough:#B91C1C;--to:#6B7280;
+  --good:#15803D;--bad:#B91C1C;
+  --r-lg:18px;--r-md:12px;--r-sm:8px;
+  --display:"Zen Kaku Gothic New","Hiragino Kaku Gothic ProN","Noto Sans JP","Yu Gothic",system-ui,sans-serif;
+  --body:"Zen Kaku Gothic New","Hiragino Kaku Gothic ProN","Noto Sans JP","Yu Gothic",system-ui,sans-serif;
+  box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0B1531;--surface:#14224B;--surface2:#1C2E63;--ink:#EEF2FF;--ink2:#A9B6D9;--line:#2A3E78;
+  --amber:#FFC23A;--amberbg:#4A3A10;--me:#5B8CFF;--cpu:#FF5A63;
+  --wood:#B98748;--wood2:#A37439;--courtline:#F6E9D2;
+  --open:#4ADE80;--cont:#FBBF24;--tough:#F87171;--to:#9CA3AF;--good:#4ADE80;--bad:#F87171;}}
+:root[data-theme="dark"]{
+  --bg:#0B1531;--surface:#14224B;--surface2:#1C2E63;--ink:#EEF2FF;--ink2:#A9B6D9;--line:#2A3E78;
+  --amber:#FFC23A;--amberbg:#4A3A10;--me:#5B8CFF;--cpu:#FF5A63;
+  --wood:#B98748;--wood2:#A37439;--courtline:#F6E9D2;
+  --open:#4ADE80;--cont:#FBBF24;--tough:#F87171;--to:#9CA3AF;--good:#4ADE80;--bad:#F87171;}
+html{scroll-padding-top:env(safe-area-inset-top,0px);-webkit-text-size-adjust:100%}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.6}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,[tabindex]:focus-visible,summary:focus-visible{outline:3px solid var(--amber);outline-offset:2px}
+.wrap{max-width:560px;margin:0 auto;padding:16px 16px 120px}
+h1,h2,h3{font-family:var(--display);font-weight:900;font-variant-numeric:tabular-nums;line-height:1.25;margin:0}
+h2{font-size:1.45rem}
+h3{font-size:1.05rem}
+p{margin:.4em 0}
+.muted{color:var(--ink2)}
+.small{font-size:.85rem}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.sp{flex:1}
+.topbar{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.back{background:none;border:1.5px solid var(--line);border-radius:999px;padding:4px 14px;font-size:.9rem}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:none;border-radius:var(--r-md);padding:12px 18px;font-weight:700;background:var(--surface2);min-height:48px}
+.btn.primary{background:var(--me);color:#fff}
+.btn.go{background:var(--amber);color:#1a1300;font-family:var(--display);font-weight:900;font-variant-numeric:tabular-nums;font-size:1.15rem;letter-spacing:.04em}
+.btn.ghost{background:transparent;border:1.5px solid var(--line)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.block{width:100%}
+.panel{background:var(--surface);border-radius:var(--r-lg);padding:16px;margin:12px 0;border:1px solid var(--line)}
+.seg{display:flex;background:var(--surface2);border-radius:999px;padding:4px;gap:4px}
+.seg button{flex:1;border:none;background:none;border-radius:999px;padding:8px 6px;font-size:.9rem}
+.seg button[aria-pressed="true"]{background:var(--surface);font-weight:700;box-shadow:0 1px 0 var(--line)}
+
+/* ---------- home ---------- */
+.hero{position:relative;padding:28px 0 8px;text-align:left}
+.title{font-family:var(--display);font-weight:900;font-size:clamp(2.8rem,13vw,4.2rem);line-height:.98;letter-spacing:.03em}
+.title .yomi{display:block;margin-top:12px;font-size:max(1rem,.3em);font-weight:700;letter-spacing:.12em;color:var(--amber);line-height:1.4}
+.title .yomi .sub{display:block;font-size:.8rem;letter-spacing:.04em;color:var(--ink2);font-weight:400;margin-top:2px}
+.tagline{font-size:1.05rem;margin-top:12px;max-width:26em}
+.fan{position:relative;height:210px;margin:18px 0 6px}
+.fan .pcard{position:absolute;top:0;width:140px;transform-origin:50% 120%}
+.fan .pcard:nth-child(1){left:calc(50% - 170px);transform:rotate(-12deg)}
+.fan .pcard:nth-child(2){left:calc(50% - 70px);transform:translateY(-8px);z-index:2}
+.fan .pcard:nth-child(3){left:calc(50% + 30px);transform:rotate(12deg)}
+.menu{display:grid;gap:10px;margin-top:10px}
+.menu .btn{justify-content:space-between;padding:14px 18px}
+.menu .btn .n{font-family:var(--display);font-weight:900;font-variant-numeric:tabular-nums;font-size:1.1rem}
+.badge{display:inline-block;min-width:26px;padding:0 8px;border-radius:999px;background:var(--cpu);color:#fff;font-size:.8rem;line-height:22px;text-align:center}
+.record{display:flex;gap:18px;margin-top:6px}
+.record b{font-family:var(--display);font-weight:900;font-variant-numeric:tabular-nums;font-size:1.3rem}
+
+/* ---------- player card ---------- */
+.pcard{--club:#2F6BFF;position:relative;border-radius:14px;background:var(--surface);border:1px solid var(--line);overflow:hidden;text-align:left;padding:0;display:block;width:100%}
+.pcard .pc-art{height:92px;background:linear-gradient(160deg,var(--club),color-mix(in srgb,var(--club) 55%,#000));position:relative;display:flex;align-items:flex-end;justify-content:center}
+.pcard .pc-art svg{width:88px;height:88px;display:block}
+.pcard .pc-num{position:absolute;left:8px;top:4px;font-family:var(--display);font-weight:900;font-variant-numeric:tabular-nums;color:#fff;font-size:1.6rem;opacity:.9}
+.pcard .pc-pos{position:absolute;right:8px;top:8px;background:rgba(255,255,255,.9);color:#111;font-weight:700;font-size:.72rem;border-radius:6px;padding:0 6px}
+.pcard .pc-body{padding:8px 10px 10px}
+.pcard .pc-name{font-weight:700;font-size:.88rem;line-height:1.25;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:2.5em}
+.pcard .pc-club{font-size:.72rem;color:var(--ink2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pcard .pc-sal{display:inline-block;margin-top:4px;font-size:.75rem;font-weight:700;color:var(--ink2)}
+.pcard.moment{border:2px solid transparent;background:linear-gradient(var(--surface),var(--surface)) padding-box,conic-gradient(from var(--ang,0deg),#FFD35C,#FF6FB5,#7C8CFF,#4FE3C1,#FFD35C) border-box;animation:holo 5s linear infinite}
+.pcard.moment .pc-art::after{content:"";position:absolute;inset:0;background:linear-gradient(115deg,transparent 30%,rgba(255,255,255,.35) 45%,transparent 60%);background-size:250% 100%;animation:shine 3.2s ease-in-out infinite}
+.pcard .mtag{position:absolute;left:8px;bottom:6px;z-index:2;font-size:.66rem;font-weight:700;background:#111;color:#FFD35C;border-radius:6px;padding:0 6px}
+.pcard.unowned .pc-art{filter:grayscale(1) brightness(.7)}
+.pcard.unowned{opacity:.7}
+@property --ang{syntax:"<angle>";inherits:false;initial-value:0deg}
+@keyframes holo{to{--ang:360deg}}
+@keyframes shine{0%{background-position:150% 0}60%,100%{background-position:-60% 0}}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:10px}
+.cnt{position:absolute;right:6px;bottom:6px;font-size:.7rem;font-weight:700;background:var(--surface2);border-radius:6px;padding:0 6px}
+
+/* stats */
+.stats{display:grid;grid-template-columns:repeat(6,1fr);gap:4px;margin:10px 0}
+.stat{background:var(--surface2);border-radius:8px;text-align:center;padding:4px 0}
+.stat .k{font-size:.66rem;color:var(--ink2);display:block}
+.stat .g{font-family:var(--display);font-weight:900;font-variant-numeric:tabular-nums;font-size:1.15rem}
+.g5{color:#D97706}.g4{color:var(--me)}
+.tag{display:inline-block;font-size:.72rem;font-weight:700;border-radius:6px;padding:1px 7px;margin:2px 3px 0 0;background:var(--surface2)}
+.tag.off{background:color-mix(in srgb,var(--me) 16%,var(--surface))}
+.tag.def{background:color-mix(in srgb,var(--open) 18%,var(--surface))}
+.tag.tr{background:var(--amberbg)}
+
+/* modal */
+.modal{position:fixed;inset:0;background:rgba(5,10,30,.55);display:flex;align-items:flex-end;justify-content:center;z-index:50;padding:12px}
+.sheet{background:var(--surface);border-radius:var(--r-lg) var(--r-lg) 12px 12px;max-width:520px;width:100%;max-height:88vh;overflow:auto;padding:18px;margin-bottom:env(safe-area-inset-bottom,0px)}
+@media (min-width:640px){.modal{align-items:center}.sheet{border-radius:var(--r-lg)}}
+
+/* pack */
+.packstage{display:flex;gap:10px;justify-content:center;margin:24px 0;perspective:900px}
+.flip{width:31%;max-width:150px;aspect-ratio:3/4.3;position:relative;transform-style:preserve-3d;transition:transform .6s cubic-bezier(.2,.8,.2,1);border:none;background:none;padding:0}
+.flip.open{transform:rotateY(180deg)}
+.flip .face{position:absolute;inset:0;backface-visibility:hidden;border-radius:14px}
+.flip .front{background:repeating-linear-gradient(45deg,var(--me) 0 10px,color-mix(in srgb,var(--me) 80%,#000) 10px 20px);display:flex;align-items:center;justify-content:center;color:#fff;font-family:var(--display);font-weight:900;font-variant-numeric:tabular-nums;font-size:1.3rem;border:3px solid #fff}
+.flip .backf{transform:rotateY(180deg)}
+.flip .backf .pcard{height:100%}
+.newmark{position:absolute;top:-8px;right:-6px;z-index:3;background:var(--cpu);color:#fff;font-size:.7rem;font-weight:700;border-radius:999px;padding:1px 8px;transform:rotateY(180deg)}
+
+/* team build */
+.capbar{height:14px;border-radius:999px;background:var(--surface2);overflow:hidden}
+.capbar i{display:block;height:100%;background:var(--me);border-radius:999px;transition:width .25s}
+.capbar.over i{background:var(--cpu)}
+.slots{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-top:10px}
+.slot{border:2px dashed var(--line);border-radius:12px;min-height:124px;display:flex;align-items:center;justify-content:center;color:var(--ink2);font-size:.8rem;background:none;padding:0}
+.slot .pcard .pc-art{height:62px}.slot .pcard .pc-art svg{width:58px;height:58px}
+.slot .pcard .pc-body{padding:5px 6px 6px}.slot .pcard .pc-name{font-size:.68rem}.slot .pcard .pc-club{display:none}
+.slot .pcard .pc-num{font-size:1.1rem}
+.shape{display:grid;grid-template-columns:1fr 1fr;gap:6px 14px;font-size:.88rem}
+.shape .st{color:var(--amber);letter-spacing:1px}
+.plist{display:grid;gap:8px}
+.prow{display:flex;gap:10px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:8px 10px;text-align:left;width:100%}
+.prow.sel{outline:2.5px solid var(--me)}
+.prow:disabled{opacity:.45}
+.prow .av{width:44px;height:44px;border-radius:10px;overflow:hidden;flex:none}
+.prow .av svg{width:44px;height:44px;display:block}
+.prow .nm{font-weight:700;line-height:1.25}
+.prow .sal{font-family:var(--display);font-weight:900;font-variant-numeric:tabular-nums;font-size:1.1rem;margin-left:auto;text-align:right;line-height:1.1}
+.prow .sal small{display:block;font-family:var(--body);font-size:.66rem;color:var(--ink2)}
+.own{font-size:.68rem;font-weight:700;border-radius:6px;padding:0 6px;background:var(--surface2);color:var(--ink2)}
+.own.yes{background:color-mix(in srgb,var(--me) 20%,var(--surface));color:var(--me)}
+.filters{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;margin:10px 0}
+.filters button{border:1.5px solid var(--line);background:none;border-radius:999px;padding:4px 12px;font-size:.85rem;white-space:nowrap}
+.filters button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+
+/* tactic cards */
+.tlist{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.tcard{position:relative;display:flex;flex-direction:column;align-items:flex-start;text-align:left;border-radius:12px;padding:10px 10px 9px;background:var(--surface);border:1.5px solid var(--line);min-height:92px}
+.tcard .tn{font-weight:700;line-height:1.3;display:block}
+.tcard .tt{order:-1;margin-bottom:3px;font-size:.62rem;font-weight:700;border-radius:5px;padding:0 5px;background:var(--surface2)}
+.tcard .tt.set{background:var(--amberbg)}
+.tcard .tm{font-size:.74rem;color:var(--ink2);margin-top:4px;display:flex;gap:8px;flex-wrap:wrap}
+.tcard[aria-pressed="true"]{border-color:var(--me);background:color-mix(in srgb,var(--me) 10%,var(--surface))}
+.tcard:disabled{opacity:.42}
+.tcard .warn{color:var(--bad);font-weight:700}
+
+/* ---------- match ---------- */
+.board{position:sticky;top:env(safe-area-inset-top,0px);z-index:10;background:var(--bg);padding:8px 0 6px}
+.score{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;background:#0A0F22;color:#fff;border-radius:14px;padding:8px 12px}
+.score .tm{font-size:.72rem;opacity:.8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.score .pts{font-family:var(--display);font-weight:900;font-variant-numeric:tabular-nums;font-size:2.1rem;line-height:1;color:#FFC23A;text-shadow:0 0 12px rgba(255,194,58,.45)}
+.score .r{text-align:right}
+.score .mid{text-align:center;padding:0 10px}
+.score .mid .t{font-family:var(--display);font-weight:900;font-variant-numeric:tabular-nums;font-size:1rem}
+.score .mid .ot{font-size:.7rem;color:#FFC23A}
+.mom{display:flex;align-items:center;gap:6px;margin-top:6px;font-size:.72rem;color:var(--ink2)}
+.mom .dots{display:flex;gap:4px;flex:1;justify-content:center}
+.mom .dots i{width:14px;height:8px;border-radius:4px;background:var(--surface2)}
+.mom .dots i.p{background:var(--me)}.mom .dots i.c{background:var(--cpu)}.mom .dots i.z{background:var(--ink2)}
+.hot{font-size:.7rem;font-weight:700;background:var(--amber);color:#1a1300;border-radius:999px;padding:0 8px}
+.court{width:100%;height:auto;display:block;border-radius:14px}
+.bags{display:flex;gap:6px}
+.bag{flex:1;border-radius:10px;padding:6px 8px;background:var(--surface);border:1px solid var(--line);font-size:.75rem;line-height:1.3}
+.bag b{display:block;font-size:.78rem}
+.pip{display:inline-block;width:6px;height:6px;border-radius:50%;margin-right:2px;vertical-align:middle}
+.pip.h{background:var(--open)}.pip.m{background:var(--surface2);border:1px solid var(--ink2)}
+.step{font-family:var(--display);font-weight:900;font-variant-numeric:tabular-nums;font-size:1rem;margin:16px 0 8px;display:flex;align-items:center;gap:8px}
+.step .n{width:24px;height:24px;border-radius:50%;background:var(--ink);color:var(--bg);display:inline-flex;align-items:center;justify-content:center;font-size:.8rem}
+.hand{display:flex;gap:8px;overflow-x:auto;padding:2px 2px 8px;scroll-snap-type:x mandatory}
+.hand .tcard{flex:0 0 150px;scroll-snap-align:start}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{display:flex;align-items:center;gap:6px;border:1.5px solid var(--line);background:var(--surface);border-radius:999px;padding:4px 10px 4px 4px;font-size:.85rem;min-height:40px}
+.chip .dot{width:30px;height:30px;border-radius:50%;background:var(--me);color:#fff;font-family:var(--display);font-weight:900;font-variant-numeric:tabular-nums;font-size:.8rem;display:flex;align-items:center;justify-content:center}
+.chip[aria-pressed="true"]{border-color:var(--me);background:color-mix(in srgb,var(--me) 12%,var(--surface));font-weight:700}
+.chip .stb{width:28px;height:4px;border-radius:2px;background:var(--surface2);overflow:hidden;display:block}
+.chip .stb i{display:block;height:100%;background:var(--open)}
+.chip .stb i.low{background:var(--bad)}
+.preview{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;margin-top:10px}
+.pv{border-radius:8px;padding:5px 4px;text-align:center;background:var(--surface2);font-size:.7rem;line-height:1.3}
+.pv b{display:block;font-size:.78rem}
+.q-open{color:var(--open)}.q-cont{color:var(--cont)}.q-tough{color:var(--tough)}.q-to{color:var(--to)}
+.qbadge{display:inline-block;font-family:var(--display);font-weight:900;font-variant-numeric:tabular-nums;font-size:1rem;border-radius:8px;padding:2px 10px;border:2px solid currentColor}
+.stances{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.stance{text-align:left;border:1.5px solid var(--line);background:var(--surface);border-radius:12px;padding:10px;min-height:72px}
+.stance b{display:block}
+.stance span{font-size:.74rem;color:var(--ink2);display:block;line-height:1.4}
+.stance[aria-pressed="true"]{border-color:var(--cpu);background:color-mix(in srgb,var(--cpu) 10%,var(--surface))}
+.stance .rep{margin-top:4px;font-size:.72rem}
+.commit{position:fixed;left:0;right:0;bottom:0;z-index:20;padding:10px 16px calc(10px + env(safe-area-inset-bottom,0px));background:linear-gradient(transparent,var(--bg) 30%)}
+.commit .inner{max-width:528px;margin:0 auto}
+details.opp{background:var(--surface);border:1px solid var(--line);border-radius:14px;margin-top:10px}
+details.opp summary{padding:10px 14px;font-weight:700;cursor:pointer;list-style:none;display:flex;gap:8px;align-items:center}
+details.opp summary::-webkit-details-marker{display:none}
+details.opp summary::after{content:"＋";margin-left:auto;color:var(--ink2)}
+details.opp[open] summary::after{content:"－"}
+details.opp .inner{padding:0 14px 14px}
+.oppp{display:flex;gap:8px;align-items:center;padding:6px 0;border-top:1px solid var(--line);font-size:.85rem}
+.oppp .dot{width:28px;height:28px;border-radius:50%;background:var(--cpu);color:#fff;font-family:var(--display);font-weight:900;font-variant-numeric:tabular-nums;font-size:.75rem;display:flex;align-items:center;justify-content:center;flex:none}
+.hint{font-size:.78rem;color:var(--ink2);margin-top:6px}
+
+/* resolution */
+.res{background:var(--surface);border-radius:var(--r-lg);border:1px solid var(--line);padding:16px;margin-top:12px}
+.res .who{font-family:var(--display);font-weight:900;font-variant-numeric:tabular-nums;font-size:1.2rem}
+.res.p .who{color:var(--me)}.res.c .who{color:var(--cpu)}
+.res .play{margin:6px 0 10px;font-weight:700}
+.coinrow{display:flex;align-items:center;gap:14px;margin:12px 0}
+.coin{width:74px;height:74px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--display);font-weight:900;font-variant-numeric:tabular-nums;font-size:1rem;color:#fff;flex:none;animation:coin .9s cubic-bezier(.2,.8,.2,1)}
+.coin.hit{background:var(--open)}.coin.miss{background:#6B7280}.coin.to{background:#6B7280}
+@keyframes coin{0%{transform:rotateY(0) scale(.6)}70%{transform:rotateY(720deg) scale(1.08)}100%{transform:rotateY(720deg) scale(1)}}
+.bigpts{font-family:var(--display);font-weight:900;font-variant-numeric:tabular-nums;font-size:2.2rem;line-height:1}
+.why{list-style:none;padding:0;margin:10px 0 0;font-size:.86rem}
+.why li{display:flex;gap:8px;padding:3px 0;border-top:1px dashed var(--line)}
+.why li .v{width:30px;flex:none;text-align:right;font-family:var(--display);font-weight:900;font-variant-numeric:tabular-nums;font-size:.85rem}
+.why li.pos .v{color:var(--good)}.why li.neg .v{color:var(--bad)}.why li.inf .v{color:var(--ink2)}
+.why li.base .v{color:var(--ink)}
+.qline{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.callout{border-left:4px solid var(--amber);background:var(--amberbg);padding:8px 12px;border-radius:0 10px 10px 0;margin:10px 0;font-size:.9rem}
+
+/* result */
+.final{text-align:center;padding:26px 0 6px}
+.final .wl{font-family:var(--display);font-weight:900;font-variant-numeric:tabular-nums;font-size:3rem;line-height:1}
+.final .sc{font-family:var(--display);font-weight:900;font-variant-numeric:tabular-nums;font-size:2.2rem;margin-top:8px}
+.log{width:100%;border-collapse:collapse;font-size:.82rem}
+.log th,.log td{padding:6px 4px;border-top:1px solid var(--line);text-align:left;vertical-align:top}
+.log th{font-size:.72rem;color:var(--ink2);font-weight:700}
+.tablewrap{overflow-x:auto}
+
+/* howto */
+.howto h3{margin-top:18px}
+.howto p,.howto li{font-size:.95rem}
+.howto ul{padding-left:1.2em}
+
+@media (prefers-reduced-motion:reduce){
+  *{animation:none!important;transition:none!important}
+}
+
+.rp{display:inline-flex;gap:2px;align-items:center}.rp i{width:7px;height:7px;border-radius:2px;background:var(--surface2);border:1px solid var(--line)}.rp i.on{background:var(--bad);border-color:var(--bad)}
+.tcard .fresh{color:var(--good);font-weight:700}
+
+.phase{background:var(--surface);border:1px solid var(--line);border-left:6px solid var(--me);border-radius:16px;padding:14px 14px 16px;margin-top:16px}
+.phase.def{border-left-color:var(--cpu)}
+.phase-h{display:flex;align-items:center;gap:10px;padding-bottom:10px;border-bottom:1px solid var(--line)}
+.phase-h h3{font-size:1rem}
+.pill{flex:none;font-family:var(--display);font-weight:900;font-size:1.05rem;color:#fff;background:var(--me);border-radius:10px;padding:4px 12px;letter-spacing:.08em}
+.phase.def .pill{background:var(--cpu)}
+.substep{display:flex;align-items:center;gap:8px;margin:14px 0 8px;font-weight:700;font-size:.95rem}
+.substep .sn{width:22px;height:22px;border-radius:50%;border:2px solid var(--me);color:var(--me);font-size:.75rem;font-weight:900;display:inline-flex;align-items:center;justify-content:center;flex:none}
+.phase.def .substep .sn{border-color:var(--cpu);color:var(--cpu)}
+.phase .stance{background:var(--bg)}
+.phase .stance[aria-pressed="true"]{background:color-mix(in srgb,var(--cpu) 10%,var(--surface))}
+.phase .tcard{background:var(--bg)}
+.phase .tcard[aria-pressed="true"]{background:color-mix(in srgb,var(--me) 10%,var(--surface))}
+.phase .chip{background:var(--bg)}
+.phase .chip[aria-pressed="true"]{background:color-mix(in srgb,var(--me) 12%,var(--surface))}
+.phase .pv{background:var(--surface2)}
+details.opp.mine{border-left:5px solid var(--me)}
+details.opp:not(.mine){border-left:5px solid var(--cpu)}
+.mstats{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:3px;margin:5px 0 2px;max-width:330px}
+.mstats span{background:var(--surface2);border-radius:6px;text-align:center;line-height:1.15;padding:2px 0}
+.mstats small{display:block;font-size:.54rem;color:var(--ink2);white-space:nowrap;letter-spacing:-.06em;overflow:visible}
+.mstats b{font-size:.85rem;font-weight:900}
+.verdict{font-weight:700;font-size:1.05rem;border-radius:12px;padding:10px 14px;margin:12px 0 8px}
+.verdict b{font-family:var(--display);font-weight:900;font-size:1.5rem;margin-left:6px}
+.verdict.ok{background:color-mix(in srgb,var(--open) 16%,var(--surface));color:var(--open)}
+.verdict.ng{background:var(--surface2);color:var(--ink2)}
+.seq{display:flex;flex-direction:column;align-items:stretch;gap:2px;margin:8px 0}
+.sq{display:flex;align-items:center;gap:12px}
+.sq > span{font-size:.88rem;line-height:1.4}
+.seq .coin{width:58px;height:58px;font-size:.9rem}
+.seq .arrow{width:58px;text-align:center;font-size:1.1rem;line-height:1.2;color:var(--ink2)}
+
+</style>
+</head>
+<body>
+<main id="app"></main>
+<script>
+(function(){
+/* ===== ENGINE START ===== */
+const GR = { S: 5, A: 4, B: 3, C: 2, D: 1 };
+const GL = { 5: 'S', 4: 'A', 3: 'B', 2: 'C', 1: 'D' };
+const STAT_KEYS = ['SHT', 'FIN', 'PAS', 'DEF', 'REB', 'STA'];
+const STAT_NAMES = { SHT: 'シュート', FIN: '突破', PAS: 'パス', DEF: '守備', REB: 'リバウンド', STA: 'スタミナ' };
+
+const TAG_INFO = {
+  Spacer: { name: 'スペーサー', desc: '外で待って守備を外に引きつける' },
+  Slasher: { name: 'スラッシャー', desc: 'すき間に切り込む' },
+  Roller: { name: 'ローラー', desc: 'スクリーン後にゴール下へ走る' },
+  Connector: { name: 'コネクター', desc: 'パスをつないで全員を動かす' },
+  Anchor: { name: 'アンカー', desc: 'ゴール下を守る' },
+  Lockdown: { name: 'ロックダウン', desc: 'ボールを持つ選手を止める' },
+  Chaser: { name: 'チェイサー', desc: 'シューターを追いかける' },
+  Switch: { name: 'スイッチ', desc: 'スクリーンに強い' }
+};
+
+const TRAITS = {
+  clutch: { name: 'クラッチ', desc: '第6ターン以降、起点になると攻撃+2' },
+  corner: { name: 'コーナーの名手', desc: '3Pを打つとき+1' },
+  screener: { name: 'ピック職人', desc: 'P&R・ハンドオフ・ホーンズで関わると+1' },
+  quickpass: { name: '高速パス', desc: 'パスを出す役のとき+1' },
+  ironman: { name: '鉄人', desc: '疲れにくい（消耗が半分）' },
+  rimguard: { name: 'リムガード', desc: '守備でゴール下への攻撃を-1' },
+  pest: { name: 'スティール職人', desc: 'プレス守備の圧力+2' },
+  boardman: { name: 'リバウンド王', desc: 'リバウンド争い+2' },
+  hothand: { name: 'ホットハンド', desc: '前の攻撃で得点していたら攻撃+1' },
+  bigshot: { name: 'ビッグショット', desc: '第5ターン以降、3Pを打つとき+2' },
+  floor: { name: 'フロアジェネラル', desc: 'ホーンズ・5アウトの起点のとき+2' },
+  wall: { name: '壁', desc: '守備で相手のアイソ・ポストを-1' }
+};
+
+const CLUBS = {
+  sea: { name: '港町シーガルズ', color: '#2F6BFF' },
+  bear: { name: '高原ベアーズ', color: '#1FA37A' },
+  sam: { name: '城下町サムライズ', color: '#E0413B' },
+  frost: { name: '雪国フロスト', color: '#3AA6D8' },
+  falcon: { name: '砂丘ファルコンズ', color: '#EE8420' }
+};
+
+function P(id, name, club, num, pos, sal, g, off, def, trait, moment) {
+  const s = {};
+  STAT_KEYS.forEach((k, i) => (s[k] = GR[g[i]]));
+  return { id, name, club, num, pos, sal, s, off, def, trait, moment };
+}
+const PLAYERS = [
+  P('a1', '蒼井 ハル', 'sea', 3, 'PG', 30, 'BASDDB', ['Connector'], [], 'quickpass', 'floor'),
+  P('a2', 'マーカス・リード', 'sea', 23, 'SF', 26, 'AABABB', ['Slasher'], ['Lockdown'], 'clutch', 'hothand'),
+  P('a3', '潮田 レン', 'sea', 11, 'SG', 14, 'SCCCDB', ['Spacer'], [], 'corner', 'bigshot'),
+  P('a4', 'ダニエル・オコンクォ', 'sea', 34, 'C', 24, 'DACASC', ['Roller'], ['Anchor'], 'boardman', 'rimguard'),
+  P('b1', '熊谷 ゴウ', 'bear', 55, 'C', 22, 'CABAAB', ['Roller', 'Connector'], ['Anchor'], 'screener', 'boardman'),
+  P('b2', '森 ソウタ', 'bear', 7, 'PG', 16, 'BBAACS', ['Connector'], ['Lockdown'], 'ironman', 'pest'),
+  P('b3', 'ジェイ・ハワード', 'bear', 21, 'PF', 20, 'ABCBAB', ['Spacer'], ['Switch'], 'wall', 'corner'),
+  P('b4', '岩井 タクミ', 'bear', 2, 'SG', 10, 'BCCACA', ['Spacer'], ['Chaser'], 'pest', 'ironman'),
+  P('c1', '剣持 リュウ', 'sam', 1, 'SG', 32, 'SABBCB', ['Spacer', 'Slasher'], [], 'clutch', 'bigshot'),
+  P('c2', 'ルイス・マルティン', 'sam', 15, 'PF', 18, 'CBBSAB', ['Roller'], ['Switch', 'Anchor'], 'wall', 'rimguard'),
+  P('c3', '本多 ツバサ', 'sam', 5, 'PG', 12, 'BBABDA', ['Connector'], ['Lockdown'], 'quickpass', 'floor'),
+  P('c4', '大門 ケン', 'sam', 50, 'C', 15, 'DBCAAB', ['Roller'], ['Anchor'], 'rimguard', 'boardman'),
+  P('d1', '白石 ユキ', 'frost', 8, 'SF', 24, 'ABAABB', ['Connector', 'Spacer'], ['Switch'], 'floor', 'clutch'),
+  P('d2', 'アレクセイ・ボルコフ', 'frost', 12, 'C', 26, 'BAABAC', ['Connector'], ['Anchor'], 'screener', 'quickpass'),
+  P('d3', '氷室 ジン', 'frost', 30, 'SG', 13, 'ACBBCB', ['Spacer'], ['Chaser'], 'hothand', 'corner'),
+  P('d4', '雪村 ダイチ', 'frost', 42, 'PF', 9, 'CBCBAA', ['Roller'], ['Switch'], 'ironman', 'boardman'),
+  P('e1', '隼 カイト', 'falcon', 0, 'PG', 22, 'ASBCCB', ['Slasher'], [], 'hothand', 'clutch'),
+  P('e2', 'トーマス・ベル', 'falcon', 9, 'SF', 16, 'BBCSBA', ['Slasher'], ['Lockdown', 'Chaser'], 'pest', 'wall'),
+  P('e3', '砂川 ミナト', 'falcon', 24, 'SG', 11, 'ACCBCB', ['Spacer'], ['Chaser'], 'corner', 'hothand'),
+  P('e4', 'イブラ・ンジャイ', 'falcon', 4, 'C', 20, 'DSDAAB', ['Roller'], ['Anchor'], 'rimguard', 'screener')
+];
+const PMAP = Object.fromEntries(PLAYERS.map(p => [p.id, p]));
+
+const CARDS = {
+  pnr: { name: 'ピック&ロール', type: 'ACTION', uses: 3, cd: 1, h: 'ボールを運ぶ選手', o: 'スクリーンをかける選手', stat: 'PAS', desc: 'スクリーナーがローラーならゴール下へ、スペーサーなら外で3P（ポップ）。', screen: true },
+  dk: { name: 'ドライブ&キック', type: 'ACTION', uses: 3, cd: 1, h: 'ドライブする選手', o: 'パスを受けて3Pを打つ選手', stat: 'FIN', desc: '切り込んで守備を集め、外のシューターへ。', onball: true },
+  iso: { name: 'アイソレーション', type: 'ACTION', uses: 2, cd: 1, h: '1対1をする選手', o: null, stat: 'ISO', desc: 'エースに任せる。ミドルシュートで勝負。', onball: true },
+  post: { name: 'ポストアップ', type: 'ACTION', uses: 2, cd: 1, h: 'ゴール下で受ける選手', o: null, stat: 'FIN', desc: 'ゴール下で体を張って押し込む。', onball: true },
+  cs: { name: 'キャッチ&シュート', type: 'ACTION', uses: 2, cd: 1, h: 'シューター', o: 'パスを出す選手', stat: 'SHT', desc: 'パスを受けてすぐに3P。チームの連動が大事。' },
+  back: { name: 'バックドアカット', type: 'ACTION', uses: 1, cd: 1, h: '裏へ走る選手', o: 'パスを出す選手', stat: 'FIN', desc: '外を守る相手の裏をつく。外郭警戒・プレスに強い。' },
+  ho: { name: 'ハンドオフ', type: 'ACTION', uses: 2, cd: 1, h: 'ボールを受け取る選手', o: '手渡しする選手', stat: 'SHT', desc: '手渡しで壁を作り、シューターを走らせる。', screen: true },
+  q3: { name: 'クイック3', type: 'ACTION', uses: 1, cd: 1, h: 'シューター', o: null, stat: 'SHT', desc: '守備が整う前に撃つ。相手の守備方針の影響を受けない。' },
+  fiveout: { name: '5アウト', type: 'SET', uses: 2, cd: 2, h: 'ドライブする選手', o: null, stat: 'FIN', desc: '全員が外へ広がってドライブ。次のターンも広いスペースが残る。ただし自分の守備は戻りが遅れる。', onball: true },
+  horns: { name: 'ホーンズ', type: 'SET', uses: 2, cd: 2, h: '起点の選手', o: 'エルボーで受ける選手', stat: 'PAS', desc: '2人の長身選手を高い位置に置く。次のターンのP&R・ハンドオフが強くなる。', screen: true },
+  free: { name: 'フリーオフェンス', type: 'BASIC', uses: 99, cd: 0, h: '起点の選手', o: null, stat: 'ISO', desc: 'いつでも使える基本攻撃。少し弱い。' }
+};
+const DECK_CARDS = ['pnr', 'dk', 'iso', 'post', 'cs', 'back', 'ho', 'q3', 'fiveout', 'horns'];
+
+const STANCES = {
+  inside: { name: 'インサイド警戒', short: '中を守る', desc: 'ゴール下を固める。そのぶん3Pは空きやすい。' },
+  outside: { name: '外郭警戒', short: '外を守る', desc: '3Pを止める。そのぶんゴール下が手薄に。' },
+  balance: { name: 'バランス', short: 'バランス', desc: '全部を少しずつ守る。大きな穴はないが決め手もない。' },
+  press: { name: 'プレス', short: 'プレス', desc: 'ボールを奪いにいく。成功すれば相手は攻撃できない。失敗すると崩れる。全員が疲れる。' }
+};
+const STANCE_IDS = ['inside', 'outside', 'balance', 'press'];
+const STANCE_MOD = {
+  inside: { INSIDE: -2, MID: -1, THREE: 2 },
+  outside: { INSIDE: 2, MID: -1, THREE: -2 },
+  balance: { INSIDE: -1, MID: -1, THREE: -1 },
+  press: { INSIDE: 0, MID: 0, THREE: 0 }
+};
+const QUALITY = {
+  OPEN: { name: 'オープン', cls: 'q-open' },
+  CONTESTED: { name: 'コンテスト', cls: 'q-cont' },
+  TOUGH: { name: 'タフ', cls: 'q-tough' },
+  TO: { name: 'ターンオーバー', cls: 'q-to' }
+};
+const BAG_BASE = { OPEN: [8, 2], CONTESTED: [5, 5], TOUGH: [3, 7] };
+const SHOT_NAME = { INSIDE: 'ゴール下', MID: 'ミドル', THREE: '3P' };
+
+const CPU_TEAMS = [
+  { id: 'shoot', name: 'ミラーHCの3Pクラブ', coach: 'ミラー', personality: 'three', color: '#9B5CF6', desc: '外から撃ちまくる。3Pが入り出すと止まらない。', roster: ['c1', 'd3', 'a3', 'b3', 'c3'], deck: ['dk', 'cs', 'q3', 'ho', 'fiveout'] },
+  { id: 'paint', name: '大岩HCのインサイド軍団', coach: '大岩', personality: 'inside', color: '#C2410C', desc: 'ゴール下で押し込む。リバウンドに強い。', roster: ['e4', 'a4', 'c2', 'b2', 'e3'], deck: ['post', 'pnr', 'back', 'horns', 'iso'] },
+  { id: 'wall', name: '守屋HCの堅守チーム', coach: '守屋', personality: 'defense', color: '#0F766E', desc: 'しつこい守備とプレス。ボールを奪ってくる。', roster: ['b1', 'b2', 'e2', 'c2', 'b4'], deck: ['pnr', 'dk', 'ho', 'back', 'cs'] },
+  { id: 'star', name: '北条HCのオールスター', coach: '北条', personality: 'balance', color: '#B45309', desc: '穴のない万能型。いちばん手ごわい。', roster: ['a1', 'd1', 'e2', 'b3', 'd4'], deck: ['pnr', 'dk', 'horns', 'fiveout', 'cs'] }
+];
+
+/* ---------- helpers ---------- */
+function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+function makeBag(q) { const [h, m] = BAG_BASE[q]; return shuffle([...Array(h).fill(1), ...Array(m).fill(0)]); }
+function bagProb(team, q) {
+  const b = team.bags[q]; if (!b.length) { const [h, m] = BAG_BASE[q]; return h / (h + m); }
+  return b.reduce((a, x) => a + x, 0) / b.length;
+}
+function surname(p) { const n = p.name; return n.includes(' ') ? n.split(' ')[0] : n.split('・').pop(); }
+function hasTag(p, t) { return p.off.includes(t) || p.def.includes(t); }
+function stars(v) { return v <= 1 ? 1 : v <= 3 ? 2 : v <= 5 ? 3 : v <= 7 ? 4 : 5; }
+
+function teamShape(players) {
+  let g = 0, paint = 0, flow = 0;
+  players.forEach(p => {
+    if (p.off.includes('Spacer')) g += 2;
+    if (p.s.SHT >= 4) g += 1;
+    if (p.off.includes('Roller') || (!p.off.includes('Spacer') && p.s.SHT <= 2)) paint += 1;
+    if (p.off.includes('Connector')) flow += 2;
+    if (p.off.includes('Slasher')) flow += 1;
+    if (p.s.PAS >= 4) flow += 1;
+  });
+  const reb = players.map(p => p.s.REB).sort((a, b) => b - a);
+  const dcount = t => players.filter(p => p.def.includes(t)).length;
+  return { gravity: stars(g), flow: stars(flow), paint, crowded: paint >= 3, reb: reb[0] + reb[1], anchor: dcount('Anchor'), lockdown: dcount('Lockdown'), chaser: dcount('Chaser'), sw: dcount('Switch') };
+}
+
+function makeTeam(side, name, color, rosterIds, variants, deckIds, personality) {
+  const players = rosterIds.map(id => {
+    const p = PMAP[id];
+    return { ...p, trait: variants && variants[id] === 'moment' ? p.moment : p.trait, st: 100, pts: 0 };
+  });
+  const deck = deckIds.map(id => ({ id, read: 0, used: 0 }));
+  return {
+    side, name, color, players, deck, personality: personality || 'balance',
+    shape: teamShape(players),
+    bags: { OPEN: makeBag('OPEN'), CONTESTED: makeBag('CONTESTED'), TOUGH: makeBag('TOUGH') },
+    timeout: 1, hot: false, lastScorer: null, activeSet: null, score: 0,
+    stanceHist: { inside: 0, outside: 0, balance: 0, press: 0 }, log: []
+  };
+}
+
+function eff(p, k) { return Math.max(1, p.s[k] - (p.st < 40 ? 1 : 0)); }
+/* 読まれ度: 使うと+2、使わなかったターンの終わりに-1。攻撃の質から読まれ度ぶん引かれる */
+const READ_GAIN = 2, READ_MAX = 6;
+function cardAvailable() { return true; }
+
+/* Core evaluation: returns q, quality, shot type, shooter, reasons.
+   ctx: {att, def, cardId, h, o, stance, turn, defCardId} */
+function evalAttack(ctx) {
+  const { att, def, cardId, h, o, stance, turn } = ctx;
+  const C = CARDS[cardId];
+  const hp = att.players[h];
+  const op = o != null ? att.players[o] : null;
+  const R = [];
+  const add = (v, t) => { if (v !== 0) R.push({ v, t }); return v; };
+  let q = 0;
+  const hn = surname(hp), on = op ? surname(op) : '';
+
+  // shot type & shooter
+  let shot = 'MID', shooter = h;
+  if (cardId === 'pnr') {
+    if (op.off.includes('Roller')) { shot = 'INSIDE'; shooter = o; }
+    else if (op.off.includes('Spacer')) { shot = 'THREE'; shooter = o; }
+  } else if (cardId === 'dk') { shot = 'THREE'; shooter = o; }
+  else if (cardId === 'post' || cardId === 'back' || cardId === 'fiveout') shot = 'INSIDE';
+  else if (cardId === 'cs' || cardId === 'q3') shot = 'THREE';
+  else if (cardId === 'ho') shot = hp.s.SHT >= 4 ? 'THREE' : 'MID';
+  else if (cardId === 'horns') { shot = 'MID'; shooter = o; }
+  const sp = att.players[shooter];
+
+  // base stat
+  let base;
+  if (C.stat === 'ISO') base = Math.max(eff(hp, 'FIN'), eff(hp, 'SHT'));
+  else base = eff(hp, C.stat);
+  const statLabel = C.stat === 'ISO' ? (hp.s.FIN >= hp.s.SHT ? 'FIN' : 'SHT') : C.stat;
+  q += base; R.push({ v: base, t: `${hn}の${STAT_NAMES[statLabel]}（${GL[hp.s[statLabel]]}）`, base: true });
+  if (hp.st < 40) R.push({ v: -1, t: `${hn}が疲れている`, info: true });
+  if (cardId === 'free') q += add(-1, '決まった形がない');
+
+  // card-specific
+  if (cardId === 'pnr') {
+    if (shot === 'INSIDE') q += add(2, `${on}がロールしてゴールへ`);
+    else if (shot === 'THREE') { q += add(1, `${on}がポップして3Pへ`); if (op.s.SHT >= 5) q += add(1, `${on}のシュート力`); }
+    if (op.trait === 'screener') q += add(1, `${on}のピック職人`);
+  }
+  if (cardId === 'dk') {
+    if (op.s.SHT >= 5) q += add(2, `${on}のシュート力（S）`); else if (op.s.SHT === 4) q += add(1, `${on}のシュート力（A）`);
+    if (hp.trait === 'quickpass') q += add(1, `${hn}の高速パス`);
+  }
+  if (cardId === 'iso' && hp.off.includes('Slasher')) q += add(1, `${hn}の切り込み`);
+  if (cardId === 'post' && hp.s.REB >= 4) q += add(1, `${hn}の体の強さ`);
+  if (cardId === 'cs' || cardId === 'back') {
+    if (op.s.PAS >= 4) q += add(1, `${on}の正確なパス`);
+    if (op.trait === 'quickpass') q += add(1, `${on}の高速パス`);
+  }
+  if (cardId === 'back' && hp.off.includes('Slasher')) q += add(2, `${hn}はスラッシャー`);
+  if (cardId === 'ho') {
+    if (op.off.includes('Connector') || op.off.includes('Roller')) q += add(1, `${on}の手渡しスクリーン`);
+    if (op.trait === 'screener') q += add(1, `${on}のピック職人`);
+  }
+  if (cardId === 'q3') q += add(1, '守備が整う前に撃てる');
+  if (cardId === 'fiveout') q += add(1, '全員が外に広がる');
+  if (cardId === 'horns') {
+    if (op.off.includes('Connector') || op.off.includes('Roller')) q += add(1, `${on}がエルボーで起点に`);
+    if (att.players.filter(p => p.off.includes('Connector')).length >= 2) q += add(1, 'コネクターが2人以上');
+    if (op.trait === 'screener') q += add(1, `${on}のピック職人`);
+  }
+
+  // team shape
+  const setNow = att.activeSet && att.activeSet.turn === turn ? att.activeSet.id : null;
+  let grav = att.shape.gravity;
+  if (setNow === 'fiveout') grav = Math.min(5, grav + 2);
+  const spaceCards = ['dk', 'post', 'fiveout'].includes(cardId) || (cardId === 'pnr' && shot === 'INSIDE');
+  if (spaceCards) {
+    const gb = grav - 3;
+    if (gb) q += add(gb, gb > 0 ? `外の脅威★${grav}で中が広い` : `外の脅威★${grav}で中が狭い`);
+    if (att.shape.crowded && setNow !== 'fiveout' && cardId !== 'fiveout') q += add(-1, 'ゴール下が混み合っている');
+  }
+  if (['cs', 'ho', 'horns', 'back'].includes(cardId)) {
+    const fb = att.shape.flow - 3;
+    if (fb) q += add(fb, fb > 0 ? `連動★${att.shape.flow}でボールが回る` : `連動★${att.shape.flow}で動きが少ない`);
+  }
+  if (setNow === 'fiveout' && ['dk', 'pnr', 'post', 'iso', 'back'].includes(cardId)) q += add(1, '前のターンの5アウトが効いている');
+  if (setNow === 'horns') {
+    if (cardId === 'pnr' || cardId === 'ho') q += add(2, '前のターンのホーンズが効いている');
+    if (cardId === 'cs') q += add(1, '前のターンのホーンズが効いている');
+  }
+
+  // traits
+  if (hp.trait === 'clutch' && turn >= 6) q += add(2, `${hn}のクラッチ`);
+  if (hp.trait === 'hothand' && att.lastScorer === hp.id) q += add(1, `${hn}のホットハンド`);
+  if (hp.trait === 'floor' && (cardId === 'horns' || cardId === 'fiveout')) q += add(2, `${hn}のフロアジェネラル`);
+  if (shot === 'THREE' && sp.trait === 'corner') q += add(1, `${surname(sp)}はコーナーの名手`);
+  if (shot === 'THREE' && sp.trait === 'bigshot' && turn >= 5) q += add(2, `${surname(sp)}のビッグショット`);
+  if (shot === 'THREE') q += add(-1, '3Pはむずかしい');
+  if (shot === 'INSIDE') q += add(1, 'ゴールに近い');
+
+  // momentum & counter
+  if (att.hot) q += add(2, '流れに乗っている');
+  const dc = att.deck.find(c => c.id === cardId);
+  if (dc && dc.read > 0) q += add(-dc.read, `相手に読まれている（読まれ度${dc.read}）`);
+
+  // defense
+  let steal = false;
+  const act = p => p.st >= 40;
+  const tired = [];
+  const cnt = (tag) => { let n = 0; def.players.forEach(p => { if (p.def.includes(tag)) { if (act(p)) n++; else tired.push(p); } }); return n; };
+  const anchors = cnt('Anchor'), chasers = cnt('Chaser'), locks = cnt('Lockdown'), sws = cnt('Switch');
+  const dTrait = t => def.players.some(p => p.trait === t && act(p));
+  if (stance) {
+    if (stance === 'press') {
+      const pressure = 1 + 2 * locks + (dTrait('pest') ? 2 : 0);
+      const handling = eff(hp, 'PAS') + (att.players.some(p => p.off.includes('Connector')) ? 1 : 0);
+      if (pressure > handling + 1) { steal = true; R.push({ v: -9, t: `プレスでボールを奪われた（圧力${pressure} > ボール保持${handling + 1}）` }); }
+      else q += add(1, `プレスをかわして守備が崩れた（圧力${pressure} ≤ ${handling + 1}）`);
+    } else if (cardId === 'q3') {
+      R.push({ v: 0, t: `${STANCES[stance].name}が整う前に撃った`, info: true });
+    } else {
+      const m = STANCE_MOD[stance][shot];
+      q += add(m, `相手は${STANCES[stance].name}`);
+      if (cardId === 'back') {
+        if (stance === 'outside') q += add(1, '外を守る相手の裏をついた');
+        if (stance === 'inside') q += add(-1, '中が固く裏が空かない');
+      }
+    }
+    if (cardId === 'back' && stance === 'press' && !steal) q += add(1, '前に出た相手の裏をついた');
+    if (shot === 'INSIDE') {
+      if (anchors) q += add(-Math.min(2, anchors), `相手のアンカー×${anchors}`);
+      if (stance === 'inside' && anchors) q += add(-1, 'アンカーが中を固めた');
+      if (dTrait('rimguard')) q += add(-1, '相手のリムガード');
+      if (ctx.defCardId === 'fiveout') q += add(1, '相手は5アウト直後で戻りが遅い');
+    }
+    if (shot === 'THREE') {
+      if (chasers) q += add(-Math.min(2, chasers), `相手のチェイサー×${chasers}`);
+      if (stance === 'outside' && chasers) q += add(-1, 'チェイサーが外を追う');
+    }
+    if (C.onball && locks) q += add(-1, '相手のロックダウン');
+    if (C.screen && sws) q += add(-1, '相手のスイッチ守備');
+    if ((cardId === 'iso' || cardId === 'post') && dTrait('wall')) q += add(-1, '相手の壁');
+    const seen = new Set();
+    tired.forEach(p => { if (!seen.has(p.id)) { seen.add(p.id); R.push({ v: 0, t: `相手の${surname(p)}が疲れて守れない`, info: true, good: true }); } });
+  }
+
+  let quality = steal || q <= 0 ? 'TO' : q >= 6 ? 'OPEN' : q >= 3 ? 'CONTESTED' : 'TOUGH';
+  return { q, quality, shot, shooter, steal, reasons: R };
+}
+
+function evOf(team, e) {
+  if (e.quality === 'TO') return 0;
+  return bagProb(team, e.quality) * (e.shot === 'THREE' ? 3 : 2);
+}
+
+function combos(team, turn, ot) {
+  const out = [];
+  team.deck.forEach(c => {
+    if (!cardAvailable(team, c, turn, ot)) return;
+    const C = CARDS[c.id];
+    for (let h = 0; h < 5; h++) {
+      if (C.o) { for (let o = 0; o < 5; o++) if (o !== h) out.push({ cardId: c.id, h, o }); }
+      else out.push({ cardId: c.id, h, o: null });
+    }
+  });
+  return out;
+}
+
+/* ---------- CPU AI ---------- */
+const DIFF = { easy: { temp: 4, noise: 2.5 }, normal: { temp: 0.35, noise: 0.25 }, hard: { temp: 0.08, noise: 0.05 } };
+function softPick(items, scoreFn, diff) {
+  const d = DIFF[diff] || DIFF.normal;
+  const scored = items.map(it => ({ it, s: scoreFn(it) + (Math.random() - 0.5) * d.noise }));
+  const mx = Math.max(...scored.map(x => x.s));
+  const w = scored.map(x => Math.exp((x.s - mx) / d.temp));
+  const tot = w.reduce((a, b) => a + b, 0);
+  let r = Math.random() * tot;
+  for (let i = 0; i < scored.length; i++) { r -= w[i]; if (r <= 0) return scored[i].it; }
+  return scored[scored.length - 1].it;
+}
+
+function cpuChooseAttack(m, knownStance) {
+  const cpu = m.C, pl = m.P;
+  const cs = combos(cpu, m.turn, m.ot > 0);
+  const hist = pl.stanceHist;
+  const tot = STANCE_IDS.reduce((a, s) => a + hist[s] + 1, 0);
+  const score = cb => {
+    let ev = 0;
+    if (knownStance) ev = evOf(cpu, evalAttack({ att: cpu, def: pl, ...cb, stance: knownStance, turn: m.turn, defCardId: m.plan.C && m.plan.C.cardId }));
+    else STANCE_IDS.forEach(s => { ev += ((hist[s] + 1) / tot) * evOf(cpu, evalAttack({ att: cpu, def: pl, ...cb, stance: s, turn: m.turn, defCardId: null })); });
+    const C = CARDS[cb.cardId];
+    const dc = cpu.deck.find(c => c.id === cb.cardId);
+    if (C.type === 'SET' && m.turn < 6) ev += 0.1;
+    const e0 = evalAttack({ att: cpu, def: pl, ...cb, stance: 'balance', turn: m.turn });
+    if (cpu.personality === 'three' && e0.shot === 'THREE') ev += 0.15;
+    if (cpu.personality === 'inside' && e0.shot === 'INSIDE') ev += 0.15;
+    return ev * 3;
+  };
+  return softPick(cs, score, m.diff);
+}
+
+function bestReply(att, def, stance, turn, ot, defCardId) {
+  let best = null;
+  combos(att, turn, ot).forEach(cb => {
+    const e = evalAttack({ att, def, ...cb, stance, turn, defCardId });
+    const ev = evOf(att, e);
+    if (!best || ev > best.ev) best = { ...cb, e, ev };
+  });
+  return best;
+}
+
+function cpuChooseStance(m) {
+  const cpu = m.C, pl = m.P;
+  const score = s => {
+    const cs = combos(pl, m.turn, m.ot > 0);
+    const evs = cs.map(cb => evOf(pl, evalAttack({ att: pl, def: cpu, ...cb, stance: s, turn: m.turn, defCardId: null }))).sort((a, b) => b - a);
+    const top = evs.slice(0, 3);
+    let v = 0.6 * top[0] + 0.4 * (top.reduce((a, b) => a + b, 0) / top.length);
+    if (s === 'press') { const avg = cpu.players.reduce((a, p) => a + p.st, 0) / 5; if (avg < 55) v += 0.4; }
+    if (cpu.personality === 'defense' && s === 'press') v -= 0.15;
+    return -v * 3;
+  };
+  return softPick(STANCE_IDS, score, m.diff);
+}
+
+function cpuMaybeTimeout(m) {
+  const cpu = m.C, pl = m.P, plan = m.plan.C;
+  if (!cpu.timeout || !plan) return false;
+  const st = m.stance.P;
+  const cur = evalAttack({ att: cpu, def: pl, ...plan, stance: st, turn: m.turn, defCardId: m.plan.P && m.plan.P.cardId });
+  let best = null;
+  combos(cpu, m.turn, m.ot > 0).filter(c => c.cardId === plan.cardId).forEach(cb => {
+    const e = evalAttack({ att: cpu, def: pl, ...cb, stance: st, turn: m.turn, defCardId: m.plan.P && m.plan.P.cardId });
+    if (!best || e.q > best.e.q) best = { cb, e };
+  });
+  const thresh = m.diff === 'easy' ? 99 : m.turn >= 5 ? 2 : 3;
+  if (best && best.e.q - cur.q >= thresh && cur.quality !== best.e.quality) {
+    m.plan.C = best.cb; cpu.timeout = 0;
+    cpu.players.forEach(p => (p.st = Math.min(100, p.st + 20)));
+    return true;
+  }
+  return false;
+}
+
+/* ---------- match flow ---------- */
+function newMatch(pl, cpu, diff) {
+  const m = { P: pl, C: cpu, diff, turn: 1, ot: 0, maxTurn: 6, mom: 0, last: Math.random() < 0.5 ? 'P' : 'C', plan: { P: null, C: null }, stance: { P: null, C: null }, events: [], turnLog: [], over: false };
+  return m;
+}
+function other(s) { return s === 'P' ? 'C' : 'P'; }
+function isLateTurn(m) { return m.turn >= 6; }
+
+function drain(p, amt) {
+  let mult = 1.4 - 0.12 * p.s.STA;
+  if (p.trait === 'ironman') mult *= 0.5;
+  p.st = Math.max(0, Math.round(p.st - amt * mult));
+}
+
+function drawChip(team, q) {
+  if (!team.bags[q].length) team.bags[q] = makeBag(q);
+  return team.bags[q].pop();
+}
+
+function resolvePossession(m, side) {
+  const att = m[side], def = m[other(side)];
+  const plan = m.plan[side];
+  const stance = m.stance[other(side)];
+  const e = evalAttack({ att, def, ...plan, stance, turn: m.turn, defCardId: m.plan[other(side)] ? m.plan[other(side)].cardId : null });
+  const ev = { side, turn: m.turn, plan: { ...plan }, stance, e, hot: att.hot, draw: null, pts: 0, reb: null, put: null };
+  att.hot = false;
+  let scored = false;
+  if (e.quality !== 'TO') {
+    ev.draw = drawChip(att, e.quality);
+    if (ev.draw) { ev.pts = e.shot === 'THREE' ? 3 : 2; att.players[e.shooter].pts += ev.pts; scored = true; att.lastScorer = att.players[e.shooter].id; }
+    else {
+      const top2 = t => { const r = t.players.map(p => eff(p, 'REB')).sort((a, b) => b - a); return r[0] + r[1]; };
+      let o = top2(att) + att.players.filter(p => p.off.includes('Roller')).length + (att.players.some(p => p.trait === 'boardman') ? 2 : 0);
+      let d = top2(def) + def.players.filter(p => p.def.includes('Anchor') && p.st >= 40).length + (def.players.some(p => p.trait === 'boardman') ? 2 : 0) + (stance === 'inside' ? 2 : 0) - (stance === 'press' ? 1 : 0);
+      ev.reb = { o, d, won: o > d + 1 };
+      if (o > d + 1) {
+        const bi = att.players.map((p, i) => [eff(p, 'REB'), i]).sort((a, b) => b[0] - a[0])[0][1];
+        const chip = drawChip(att, 'CONTESTED');
+        ev.put = { idx: bi, draw: chip, pts: chip ? 2 : 0 };
+        if (chip) { ev.pts = 2; att.players[bi].pts += 2; scored = true; att.lastScorer = att.players[bi].id; }
+      }
+    }
+  }
+  if (!scored) att.lastScorer = null;
+  att.score += ev.pts;
+  // momentum
+  const dir = s => (s === 'P' ? 1 : -1);
+  m.mom += scored ? dir(side) : dir(other(side));
+  if (m.mom >= 3) { m.P.hot = true; m.mom = 0; ev.hotGain = 'P'; }
+  if (m.mom <= -3) { m.C.hot = true; m.mom = 0; ev.hotGain = 'C'; }
+  // card usage
+  const dc = att.deck.find(c => c.id === plan.cardId);
+  if (dc) { dc.read = Math.min(READ_MAX, dc.read + READ_GAIN); dc.used++; }
+  att.usedThisTurn = plan.cardId;
+  if (CARDS[plan.cardId].type === 'SET') att.activeSet = { id: plan.cardId, turn: m.turn + 1 };
+  // stamina
+  drain(att.players[plan.h], 10);
+  if (e.shooter !== plan.h) drain(att.players[e.shooter], 5);
+  if (stance === 'press') def.players.forEach(p => drain(p, 8));
+  m.events.push(ev);
+  return ev;
+}
+
+function endTurn(m) {
+  [m.P, m.C].forEach(t => {
+    t.deck.forEach(c => { if (c.id !== t.usedThisTurn) c.read = Math.max(0, c.read - 1); });
+    t.usedThisTurn = null;
+    t.players.forEach(p => drain(p, 5));
+    if (t.activeSet && t.activeSet.turn <= m.turn) t.activeSet = null;
+  });
+  m.stance.P && m.P.stanceHist[m.stance.P]++;
+  m.stance.C && m.C.stanceHist[m.stance.C]++;
+  m.plan = { P: null, C: null }; m.stance = { P: null, C: null };
+  if (m.turn >= 6 && m.P.score !== m.C.score) { m.over = true; return; }
+  if (m.turn >= 6) {
+    if (m.ot >= 3) { m.over = true; return; }
+    m.ot++;
+  }
+  m.turn++;
+}
+
+/* order: team WITHOUT last possession attacks first */
+function turnOrder(m) { return [other(m.last), m.last]; }
+
+/* ===== UI ===== */
+const SAVE_KEY = 'courtcommand_v1';
+const DEFAULT_SAVE = {
+  owned: { 'a1:base': 1, 'a2:base': 1, 'a3:base': 1, 'a4:base': 1, 'b2:base': 1, 'e3:base': 1, 'c4:base': 1, 'd4:base': 1 },
+  packs: 2, lastFree: '', rec: { w: 0, l: 0, d: 0 },
+  team: { roster: ['a1', 'e2', 'a3', 'b3', 'c4'], variants: {}, deck: ['pnr', 'dk', 'cs', 'post', 'fiveout'] },
+  diff: 'normal', hints: true, oppId: 'shoot'
+};
+let S;
+function load() {
+  try { const raw = localStorage.getItem(SAVE_KEY); S = raw ? { ...structuredClone(DEFAULT_SAVE), ...JSON.parse(raw) } : structuredClone(DEFAULT_SAVE); }
+  catch (e) { S = structuredClone(DEFAULT_SAVE); }
+}
+function save() { try { localStorage.setItem(SAVE_KEY, JSON.stringify(S)); } catch (e) { } }
+function today() { const d = new Date(); return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`; }
+function owns(id, v) { return (S.owned[`${id}:${v || 'base'}`] || 0) > 0; }
+function ownsAny(id) { return owns(id, 'base') || owns(id, 'moment'); }
+
+const app = document.getElementById('app');
+let view = 'home', M = null, UI = {}, packResult = null, modal = null, lastResult = null;
+
+/* ---------- small renderers ---------- */
+function avatar(p, color) {
+  const c = color || CLUBS[p.club].color;
+  return `<svg viewBox="0 0 88 88" aria-hidden="true"><circle cx="44" cy="30" r="15" fill="rgba(255,255,255,.92)"/><path d="M14 88 C14 62 26 52 44 52 C62 52 74 62 74 88 Z" fill="rgba(255,255,255,.92)"/><path d="M30 56 L44 64 L58 56 L60 88 L28 88 Z" fill="${c}"/><text x="44" y="82" text-anchor="middle" font-family="Zen Kaku Gothic New, Hiragino Kaku Gothic ProN, sans-serif" font-weight="900" font-size="14" fill="#fff">${p.num}</text></svg>`;
+}
+function statGrid(p) {
+  return `<div class="stats">${STAT_KEYS.map(k => `<div class="stat"><span class="k">${STAT_NAMES[k]}</span><span class="g g${p.s[k]}">${GL[p.s[k]]}</span></div>`).join('')}</div>`;
+}
+function tagsHtml(p, trait) {
+  return p.off.map(t => `<span class="tag off">${TAG_INFO[t].name}</span>`).join('') + p.def.map(t => `<span class="tag def">${TAG_INFO[t].name}</span>`).join('') + (trait ? `<span class="tag tr">${TRAITS[trait].name}</span>` : '');
+}
+function pcard(p, variant, opts = {}) {
+  const moment = variant === 'moment';
+  const cls = ['pcard', moment ? 'moment' : '', opts.unowned ? 'unowned' : ''].join(' ');
+  return `<div class="${cls}" style="--club:${CLUBS[p.club].color}"><div class="pc-art"><span class="pc-num">${p.num}</span><span class="pc-pos">${p.pos}</span>${avatar(p)}${moment ? '<span class="mtag">モーメント</span>' : ''}</div><div class="pc-body"><div class="pc-name">${p.name}</div><div class="pc-club">${CLUBS[p.club].name}</div>${opts.nosal ? '' : `<span class="pc-sal">年俸 ${p.sal}</span>`}</div>${opts.count > 1 ? `<span class="cnt">×${opts.count}</span>` : ''}</div>`;
+}
+function miniStats(p) { return `<span class="mstats">${STAT_KEYS.map(k => `<span><small>${STAT_NAMES[k]}</small><b class="g${p.s[k]}">${GL[p.s[k]]}</b></span>`).join('')}</span>`; }
+function starStr(n) { return '★'.repeat(n) + '☆'.repeat(5 - n); }
+function topBar(title, backTo) { return `<div class="topbar"><button class="back" data-go="${backTo || 'home'}">もどる</button><h2>${title}</h2></div>`; }
+
+/* ---------- screens ---------- */
+function render() {
+  document.body.classList.toggle('inmatch', view === 'match');
+  const f = SCREENS[view] || SCREENS.home;
+  app.innerHTML = f() + (modal ? modalHtml() : '');
+}
+const SCREENS = {};
+
+SCREENS.home = () => {
+  const free = S.lastFree !== today();
+  const fanIds = Object.keys(S.owned).filter(k => S.owned[k] > 0).sort((a, b) => (b.endsWith('moment') - a.endsWith('moment'))).slice(0, 3);
+  while (fanIds.length < 3) fanIds.push(['a1:base', 'c1:base', 'd1:base'][fanIds.length]);
+  const total = PLAYERS.length * 2, have = Object.values(S.owned).filter(x => x > 0).length;
+  return `<div class="wrap">
+  <div class="hero"><h1 class="title" lang="en">COURT<br>COMMAND<span class="yomi" lang="ja">コートコマンド<span class="sub">5人制バスケットボール戦略カードゲーム</span></span></h1>
+  <p class="tagline">選手は動かさない。5人の関係を動かして、相手の守備にズレを作る。1試合3〜5分。</p></div>
+  <div class="fan">${fanIds.map(k => { const [id, v] = k.split(':'); return pcard(PMAP[id], v, { nosal: true }); }).join('')}</div>
+  <div class="menu">
+    <button class="btn go block" data-go="team">試合をする</button>
+    <button class="btn block" data-go="collection"><span>コレクション</span><span class="n">${have}/${total}</span></button>
+    <button class="btn block" data-act="openpackscreen"><span>パックを開ける</span>${S.packs + (free ? 1 : 0) > 0 ? `<span class="badge">${S.packs + (free ? 1 : 0)}</span>` : '<span class="muted small">勝つともらえる</span>'}</button>
+    <button class="btn ghost block" data-go="howto"><span>あそびかた</span></button>
+    <button class="btn ghost block" data-go="about"><span>このプロトタイプについて</span></button>
+  </div>
+  <div class="panel"><div class="row"><span class="muted small">通算成績</span></div><div class="record"><span><b>${S.rec.w}</b> 勝</span><span><b>${S.rec.l}</b> 敗</span><span><b>${S.rec.d}</b> 分</span></div></div>
+  </div>`;
+};
+
+SCREENS.collection = () => {
+  const f = UI.cf || 'all';
+  const list = PLAYERS.filter(p => f === 'all' || p.club === f);
+  const cells = [];
+  list.forEach(p => ['base', 'moment'].forEach(v => {
+    const n = S.owned[`${p.id}:${v}`] || 0;
+    cells.push(`<button class="pcardbtn" style="border:none;background:none;padding:0;text-align:left" data-act="detail" data-id="${p.id}" data-v="${v}" aria-label="${p.name} ${v === 'moment' ? 'モーメント' : 'ノーマル'}${n ? '' : '（未所持）'}">${pcard(p, v, { unowned: !n, count: n })}</button>`);
+  }));
+  return `<div class="wrap">${topBar('コレクション')}
+  <p class="muted small">カードのレア度は見た目と「特性のバリエーション」だけを変えます。試合の強さは変わりません。未所持の選手も「スカウト」として試合で使えます。</p>
+  <div class="filters" role="group" aria-label="クラブで絞り込み"><button data-act="cf" data-v="all" aria-pressed="${f === 'all'}">すべて</button>${Object.entries(CLUBS).map(([k, c]) => `<button data-act="cf" data-v="${k}" aria-pressed="${f === k}">${c.name}</button>`).join('')}</div>
+  <div class="grid">${cells.join('')}</div></div>`;
+};
+
+function detailHtml(id, v) {
+  const p = PMAP[id]; const n = S.owned[`${id}:${v}`] || 0;
+  const tr = v === 'moment' ? p.moment : p.trait;
+  return `<div style="display:grid;grid-template-columns:120px 1fr;gap:14px;align-items:start">${pcard(p, v, { unowned: !n })}<div><h3>${p.name}</h3><p class="muted small">${CLUBS[p.club].name}・${p.pos}・#${p.num}<br>年俸 ${p.sal}${n ? `・所持 ${n}枚` : '・未所持'}</p>${tagsHtml(p)}</div></div>
+  ${statGrid(p)}
+  <p><span class="tag tr">${TRAITS[tr].name}</span> ${TRAITS[tr].desc}</p>
+  ${v === 'moment' ? `<p class="muted small">ノーマル版の特性は「${TRAITS[p.trait].name}」。モーメント版は強くなるのではなく、戦い方の選択肢が1つ増えます。</p>` : `<p class="muted small">モーメント版の特性は「${TRAITS[p.moment].name}」（${TRAITS[p.moment].desc}）。</p>`}
+  <p class="small">${p.off.concat(p.def).map(t => `<b>${TAG_INFO[t].name}</b>：${TAG_INFO[t].desc}`).join('<br>')}</p>`;
+}
+function modalHtml() {
+  return `<div class="modal" data-act="closemodal"><div class="sheet" role="dialog" aria-modal="true" data-stop>${modal.html}<button class="btn block" style="margin-top:12px" data-act="closemodal">閉じる</button></div></div>`;
+}
+
+SCREENS.pack = () => {
+  const free = S.lastFree !== today();
+  const n = S.packs + (free ? 1 : 0);
+  if (!packResult) {
+    return `<div class="wrap">${topBar('パック')}
+    <div class="panel" style="text-align:center"><p>1パックに選手カードが3枚。5枚に1枚くらいの確率で、特性が変わる「モーメント版」が出ます。</p>
+    <div class="packstage"><div class="flip" style="width:44%"><div class="face front">PACK</div></div></div>
+    <p><b>${n}</b> パック持っています${free ? '（今日の無料パックをふくむ）' : ''}</p>
+    <button class="btn go block" data-act="openpack" ${n ? '' : 'disabled'}>開ける</button>
+    ${n ? '' : '<p class="muted small">試合に勝つと1パックもらえます。無料パックは1日1回。</p>'}</div></div>`;
+  }
+  return `<div class="wrap">${topBar('パック')}
+  <p class="muted small">カードをタップしてめくろう。</p>
+  <div class="packstage">${packResult.map((c, i) => `<button class="flip ${c.open ? 'open' : ''}" data-act="flip" data-i="${i}" aria-label="${c.open ? PMAP[c.id].name : 'カードをめくる'}"><div class="face front">?</div><div class="face backf">${pcard(PMAP[c.id], c.v, { nosal: true })}</div>${c.isNew && c.open ? '<span class="newmark">NEW</span>' : ''}</button>`).join('')}</div>
+  <div class="menu">${packResult.every(c => c.open) ? '' : '<button class="btn primary block" data-act="flipall">全部めくる</button>'}
+  ${n ? `<button class="btn go block" data-act="openpack">もう1パック開ける（残り${n}）</button>` : ''}
+  <button class="btn ghost block" data-go="collection">コレクションを見る</button></div></div>`;
+};
+
+function rosterSal(r) { return r.reduce((a, id) => a + PMAP[id].sal, 0); }
+SCREENS.team = () => {
+  const r = S.team.roster, sal = rosterSal(r);
+  const shape = r.length === 5 ? teamShape(r.map(id => PMAP[id])) : null;
+  const f = UI.pf || 'all', tb = UI.tb || 'players';
+  const deck = S.team.deck;
+  const deckOk = deck.length === 5;
+  const ready = r.length === 5 && sal <= 100 && deckOk;
+  const pool = PLAYERS.filter(p => f === 'all' || p.pos === f).sort((a, b) => ownsAny(b.id) - ownsAny(a.id) || b.sal - a.sal);
+  return `<div class="wrap">${topBar('チームを作る')}
+  <div class="panel"><div class="row"><h3>選手5人</h3><span class="sp"></span><span><b style="font-family:var(--display);font-size:1.2rem">${sal}</b> / 100</span></div>
+  <div class="capbar ${sal > 100 ? 'over' : ''}" role="img" aria-label="年俸 ${sal} / 100"><i style="width:${Math.min(100, sal)}%"></i></div>
+  <div class="slots">${[0, 1, 2, 3, 4].map(i => { const id = r[i]; if (!id) return `<div class="slot">空き</div>`; const p = PMAP[id]; const v = S.team.variants[id] === 'moment' && owns(id, 'moment') ? 'moment' : 'base'; return `<button class="slot" style="border:none" data-act="rm" data-id="${id}" aria-label="${p.name}を外す">${pcard(p, v, { unowned: !ownsAny(id) })}</button>`; }).join('')}</div>
+  <p class="hint">タップで外せます。年俸の合計を100以内に。</p>
+  ${shape ? `<div class="shape" style="margin-top:10px"><span>外の脅威 <span class="st">${starStr(shape.gravity)}</span></span><span>連動 <span class="st">${starStr(shape.flow)}</span></span><span>ゴール下 ${shape.crowded ? '<b style="color:var(--bad)">混み合う</b>' : 'すっきり'}</span><span>リバウンド ${shape.reb}</span><span style="grid-column:1/-1">守備：アンカー${shape.anchor}・ロックダウン${shape.lockdown}・チェイサー${shape.chaser}・スイッチ${shape.sw}</span></div>
+  <p class="hint">外の脅威が高いほどドライブやポストが通りやすく、連動が高いほどパス系の作戦が強くなります。</p>` : ''}
+  ${r.filter(id => owns(id, 'moment')).map(id => `<div class="row small" style="margin-top:8px"><span>${PMAP[id].name}の特性</span><span class="sp"></span><div class="seg" style="min-width:230px"><button data-act="var" data-id="${id}" data-v="base" aria-pressed="${S.team.variants[id] !== 'moment'}">${TRAITS[PMAP[id].trait].name}</button><button data-act="var" data-id="${id}" data-v="moment" aria-pressed="${S.team.variants[id] === 'moment'}">${TRAITS[PMAP[id].moment].name}</button></div></div>`).join('')}
+  </div>
+  <div class="seg" style="margin:6px 0 4px"><button data-act="tb" data-v="players" aria-pressed="${tb === 'players'}">選手をえらぶ</button><button data-act="tb" data-v="deck" aria-pressed="${tb === 'deck'}">作戦カード ${deck.length}/5</button></div>
+  ${tb === 'players' ? `<div class="filters" role="group" aria-label="ポジション">${['all', 'PG', 'SG', 'SF', 'PF', 'C'].map(x => `<button data-act="pf" data-v="${x}" aria-pressed="${f === x}">${x === 'all' ? 'すべて' : x}</button>`).join('')}</div>
+  <div class="plist">${pool.map(p => { const inT = r.includes(p.id); const dis = !inT && (r.length >= 5); const tr = S.team.variants[p.id] === 'moment' && owns(p.id, 'moment') ? p.moment : p.trait; return `<button class="prow ${inT ? 'sel' : ''}" data-act="${inT ? 'rm' : 'add'}" data-id="${p.id}" ${dis ? 'disabled' : ''}><span class="av" style="background:${CLUBS[p.club].color}">${avatar(p)}</span><span><span class="nm">${p.name}</span> <span class="own ${ownsAny(p.id) ? 'yes' : ''}">${ownsAny(p.id) ? '所持' : 'スカウト'}</span><br><span class="small muted">${p.pos}</span>${miniStats(p)}<br>${tagsHtml(p, tr)}</span><span class="sal">${p.sal}<small>年俸</small></span></button>`; }).join('')}</div>` : `
+  <div class="panel"><div class="row"><h3>作戦カード5枚</h3><span class="sp"></span><span class="small muted">${deck.length}/5</span></div>
+  <p class="hint">毎ターン、5枚のどれでも使えます。ただし同じ作戦を続けると相手に読まれ、どんどん通りにくくなります。いろいろな攻め手を持っておくと、読まれにくいチームになります。</p>
+  <div class="tlist" style="margin-top:8px">${DECK_CARDS.map(id => { const C = CARDS[id]; const on = deck.includes(id); return `<button class="tcard" data-act="deck" data-id="${id}" aria-pressed="${on}" ${!on && deck.length >= 5 ? 'disabled' : ''}><span class="tn">${C.name}</span><span class="tt ${C.type === 'SET' ? 'set' : ''}">${C.type}</span><span class="small muted" style="display:block;margin-top:4px;line-height:1.4">${C.desc}</span></button>`; }).join('')}</div></div>`}
+  <div class="commit"><div class="inner"><button class="btn go block" data-go="opp" ${ready ? '' : 'disabled'}>${ready ? '対戦相手を選ぶ' : r.length < 5 ? `選手をあと${5 - r.length}人` : sal > 100 ? `年俸が${sal - 100}オーバー` : '作戦カードを5枚に'}</button></div></div>
+  </div>`;
+};
+
+SCREENS.opp = () => {
+  const sel = S.oppId;
+  return `<div class="wrap">${topBar('対戦相手', 'team')}
+  <p class="muted small">相手の選手と作戦カードは全部見えています。CPUもあなたと同じルール（年俸100・カード5枚）で戦います。</p>
+  ${CPU_TEAMS.map(t => { const on = t.id === sel; return `<button class="panel" style="display:block;width:100%;text-align:left;${on ? 'outline:3px solid ' + t.color : ''}" data-act="opp" data-id="${t.id}" aria-pressed="${on}">
+    <div class="row"><h3 style="color:${t.color}">${t.name}</h3></div><p class="small">${t.desc}</p>
+    <p class="small muted">${t.roster.map(id => `${PMAP[id].name}（${PMAP[id].pos}）`).join('、')}</p>
+    <p class="small">${t.deck.map(id => `<span class="tag">${CARDS[id].name}</span>`).join('')}</p></button>`; }).join('')}
+  <div class="panel"><h3>強さ</h3><div class="seg" style="margin-top:8px">${[['easy', 'やさしい'], ['normal', 'ふつう'], ['hard', 'つよい']].map(([k, n]) => `<button data-act="diff" data-v="${k}" aria-pressed="${S.diff === k}">${n}</button>`).join('')}</div>
+  <p class="hint">強さは能力値ではなく、CPUの読みの深さで変わります。</p>
+  <div class="row" style="margin-top:12px"><span>ヒントを表示</span><span class="sp"></span><div class="seg" style="min-width:140px"><button data-act="hints" data-v="1" aria-pressed="${S.hints}">あり</button><button data-act="hints" data-v="0" aria-pressed="${!S.hints}">なし</button></div></div>
+  <p class="hint">ヒントありでは、相手の守備ごとに自分の攻撃がどうなるかが見えます。</p></div>
+  <div class="commit"><div class="inner"><button class="btn go block" data-act="start">試合開始</button></div></div></div>`;
+};
+
+/* ---------- match ---------- */
+function startMatch() {
+  const t = CPU_TEAMS.find(x => x.id === S.oppId) || CPU_TEAMS[0];
+  const variants = {}; S.team.roster.forEach(id => { if (S.team.variants[id] === 'moment' && owns(id, 'moment')) variants[id] = 'moment'; });
+  const P = makeTeam('P', 'あなた', 'var(--me)', S.team.roster, variants, S.team.deck, 'balance');
+  const C = makeTeam('C', t.name, t.color, t.roster, {}, t.deck, t.personality);
+  M = newMatch(P, C, S.diff);
+  M.oppTeam = t;
+  UI.sel = { cardId: null, h: null, o: null, stance: null };
+  M.phase = 'plan'; M.queue = []; M.cur = null; M.note = null;
+  view = 'match'; render(); window.scrollTo(0, 0);
+}
+
+function playerLate() { return M.turn >= 6 && M.last === 'P'; }
+function cpuLate() { return M.turn >= 6 && M.last === 'C'; }
+function turnLabel() { return M.ot ? `延長${M.ot}` : `${M.turn}/6`; }
+
+function courtSvg(team, plan, cardId) {
+  const S0 = { top: [170, 44], lw: [52, 98], rw: [288, 98], lc: [22, 196], rc: [318, 196], lp: [130, 182], rp: [210, 182], le: [122, 124], re: [218, 124] };
+  const n = team.players.length; const pos = new Array(n);
+  const used = new Set();
+  const h = plan && plan.h != null ? plan.h : null;
+  const take = (i, list) => { for (const k of list.concat(Object.keys(S0))) if (!used.has(k)) { used.add(k); pos[i] = S0[k]; return; } };
+  const set = cardId === 'fiveout' || (team.activeSet && team.activeSet.turn === M.turn && team.activeSet.id === 'fiveout');
+  const horns = cardId === 'horns';
+  const order = team.players.map((p, i) => i).filter(i => i !== h);
+  if (h != null) { used.add('top'); pos[h] = S0.top; }
+  const big = p => p.off.includes('Roller') || (!p.off.includes('Spacer') && p.s.SHT <= 2);
+  order.sort((a, b) => big(team.players[b]) - big(team.players[a]));
+  order.forEach(i => {
+    const p = team.players[i];
+    if (set) take(i, ['lc', 'rc', 'lw', 'rw', 'top', 'le', 're']);
+    else if (horns && big(p)) take(i, ['le', 're', 'lp', 'rp']);
+    else if (big(p)) take(i, ['lp', 'rp', 'le', 're', 'lw']);
+    else if (p.off.includes('Spacer')) take(i, ['rc', 'lc', 'rw', 'lw', 'top']);
+    else take(i, h == null ? ['top', 'lw', 'rw', 'le', 're'] : ['lw', 'rw', 're', 'le', 'lc']);
+  });
+  const lines = (plan && plan.h != null && plan.o != null) ? `<line x1="${pos[plan.h][0]}" y1="${pos[plan.h][1]}" x2="${pos[plan.o][0]}" y2="${pos[plan.o][1]}" stroke="#FFC23A" stroke-width="3" stroke-dasharray="6 5" stroke-linecap="round"/>` : '';
+  return `<svg class="court" viewBox="0 0 340 232" role="img" aria-label="コート上の5人の配置">
+   <defs><pattern id="wood" width="34" height="232" patternUnits="userSpaceOnUse"><rect width="34" height="232" fill="var(--wood)"/><rect x="33" width="1" height="232" fill="var(--wood2)"/></pattern></defs>
+   <rect width="340" height="232" fill="url(#wood)"/>
+   <g fill="none" stroke="var(--courtline)" stroke-width="2.2" opacity=".95">
+    <rect x="128" y="120" width="84" height="112" fill="rgba(47,107,255,.14)"/>
+    <path d="M128 120 A42 42 0 0 1 212 120"/>
+    <path d="M30 232 L30 151 A150 150 0 0 1 310 151 L310 232"/>
+    <line x1="155" y1="214" x2="185" y2="214"/><circle cx="170" cy="206" r="6"/>
+   </g>
+   ${lines}
+   ${team.players.map((p, i) => { const [x, y] = pos[i]; const isH = plan && plan.h === i, isO = plan && plan.o === i; return `<g>${isH ? `<circle cx="${x}" cy="${y}" r="19" fill="none" stroke="#FFC23A" stroke-width="3"/>` : ''}${isO ? `<circle cx="${x}" cy="${y}" r="19" fill="none" stroke="#FFC23A" stroke-width="2" stroke-dasharray="4 3"/>` : ''}<circle cx="${x}" cy="${y}" r="14" fill="${team.side === 'P' ? 'var(--me)' : 'var(--cpu)'}" stroke="#fff" stroke-width="2"/><text x="${x}" y="${y + 4.5}" text-anchor="middle" font-family="Zen Kaku Gothic New, Hiragino Kaku Gothic ProN, sans-serif" font-weight="900" font-size="12" fill="#fff">${p.num}</text><text x="${x}" y="${y + 29}" text-anchor="middle" font-size="10.5" font-weight="700" fill="#1a1206">${surname(p)}</text></g>`; }).join('')}
+  </svg>`;
+}
+
+function scoreboard() {
+  const dots = [];
+  for (let i = 3; i >= -3; i--) {
+    let c = '';
+    if (i === 0) c = 'z';
+    else if (i < 0 && M.mom <= i) c = 'c';
+    else if (i > 0 && M.mom >= i) c = 'p';
+    dots.push(`<i class="${c}"></i>`);
+  }
+  return `<div class="board"><div class="score" role="status" aria-label="あなた ${M.P.score} 対 ${M.C.score}">
+    <div><div class="tm">あなた${M.last === 'P' ? '・最後の攻撃権' : ''}</div><div class="pts">${M.P.score}</div></div>
+    <div class="mid"><div class="t">${turnLabel()}</div><div class="ot">${M.turn >= 6 ? 'クラッチ' : 'ターン'}</div></div>
+    <div class="r"><div class="tm">${M.C.name}${M.last === 'C' ? '・最後の攻撃権' : ''}</div><div class="pts">${M.C.score}</div></div></div>
+    <div class="mom"><span>${M.P.hot ? '<span class="hot">あなた 流れ</span>' : 'あなた'}</span><span class="dots" role="img" aria-label="流れゲージ">${dots.join('')}</span><span>${M.C.hot ? '<span class="hot">相手 流れ</span>' : '相手'}</span></div></div>`;
+}
+
+function bagsHtml(team) {
+  return `<div class="bags">${['OPEN', 'CONTESTED', 'TOUGH'].map(q => { const b = team.bags[q]; const h = b.filter(x => x).length, m = b.length - h; return `<div class="bag"><b class="${QUALITY[q].cls}">${QUALITY[q].name}</b>${'<span class="pip h"></span>'.repeat(h)}${'<span class="pip m"></span>'.repeat(m)}<br><span class="muted">成功${h}・失敗${m}</span></div>`; }).join('')}</div>`;
+}
+
+function readPips(r) { return `<span class="rp" aria-label="読まれ度${r}">${[0, 1, 2, 3, 4, 5].map(k => `<i class="${k < r ? 'on' : ''}"></i>`).join('')}</span>`; }
+function handHtml(team, selId) {
+  return `<div class="hand" role="group" aria-label="作戦カード">${team.deck.map(c => {
+    const C = CARDS[c.id];
+    return `<button class="tcard" data-act="card" data-id="${c.id}" aria-pressed="${selId === c.id}"><span class="tn">${C.name}</span><span class="tt ${C.type === 'SET' ? 'set' : ''}">${C.type}</span><span class="tm"><span>読まれ度</span>${readPips(c.read)}${c.read ? `<span class="warn">−${c.read}</span>` : '<span class="fresh">読まれていない</span>'}</span></button>`;
+  }).join('')}</div>`;
+}
+
+function chipsHtml(team, act, sel, exclude) {
+  return `<div class="chips">${team.players.map((p, i) => i === exclude ? '' : `<button class="chip" data-act="${act}" data-i="${i}" aria-pressed="${sel === i}"><span class="dot">${p.num}</span><span>${surname(p)}<span class="stb" aria-label="スタミナ${p.st}"><i class="${p.st < 40 ? 'low' : ''}" style="width:${p.st}%"></i></span></span></button>`).join('')}</div>`;
+}
+
+function previewRow(att, def, plan) {
+  return `<div class="preview">${STANCE_IDS.map(s => { const e = evalAttack({ att, def, ...plan, stance: s, turn: M.turn, defCardId: null }); return `<div class="pv"><span class="muted">相手が${STANCES[s].short}</span><b class="${QUALITY[e.quality].cls}">${e.quality === 'TO' ? 'ミス' : QUALITY[e.quality].name}</b>${e.quality === 'TO' ? 'TO' : SHOT_NAME[e.shot]}</div>`; }).join('')}</div>`;
+}
+
+function planComplete() {
+  const s = UI.sel; if (!s.cardId || s.h == null) return false;
+  if (CARDS[s.cardId].o && s.o == null) return false;
+  return true;
+}
+
+function planView() {
+  const s = UI.sel; const late = playerLate() && M.phase === 'plan';
+  const attackStep = M.phase === 'plan-late' || !late;
+  const defStep = M.phase === 'plan';
+  const C = s.cardId ? CARDS[s.cardId] : null;
+  let out = '';
+  if (late) out += `<div class="callout">あなたが最後の攻撃権を持っています。先に守備だけ決めて、相手の攻撃の結果を見てから攻め方を選べます。</div>`;
+  if (M.phase === 'plan-late') out += `<div class="callout">いよいよ最後の攻撃。スコアは ${M.P.score} 対 ${M.C.score}。</div>`;
+  if (attackStep) {
+    let a = `<div class="substep"><span class="sn">1</span>作戦をえらぶ</div>${handHtml(M.P, s.cardId)}`;
+    if (C) {
+      a += `<p class="small" style="margin:2px 0 0">${C.desc}</p>`;
+      a += `<div class="substep"><span class="sn">2</span>${C.h}</div>${chipsHtml(M.P, 'h', s.h)}`;
+      if (C.o) a += `<div class="substep"><span class="sn">3</span>${C.o}</div>${chipsHtml(M.P, 'o', s.o, s.h)}`;
+      if (planComplete() && S.hints) a += `<p class="hint">相手の守備によってシュートの質はこう変わります</p>${previewRow(M.P, M.C, s)}`;
+    }
+    out += `<section class="phase atk" aria-label="攻め"><div class="phase-h"><span class="pill">攻め</span><h3>あなたの攻撃をどう組み立てる？</h3></div>${a}</section>`;
+  }
+  if (defStep) {
+    out += `<section class="phase def" aria-label="守り"><div class="phase-h"><span class="pill">守り</span><h3>相手の攻撃にどう備える？</h3></div><div class="substep"><span class="sn">1</span>守りの方針をえらぶ</div><div class="stances" role="group" aria-label="守備スタンス">${STANCE_IDS.map(st => {
+      let rep = '';
+      if (S.hints) { const b = bestReply(M.C, M.P, st, M.turn, M.ot > 0, attackStep ? s.cardId : null); if (b) rep = `<span class="rep">相手の最善手：${CARDS[b.cardId].name}→<b class="${QUALITY[b.e.quality].cls}">${QUALITY[b.e.quality].name}</b></span>`; }
+      return `<button class="stance" data-act="stance" data-v="${st}" aria-pressed="${s.stance === st}"><b>${STANCES[st].name}</b><span>${STANCES[st].desc}</span>${rep}</button>`;
+    }).join('')}</div></section>`;
+  }
+  const ready = (attackStep ? planComplete() : true) && (defStep ? !!s.stance : true);
+  out += `<div class="commit"><div class="inner"><button class="btn go block" data-act="commit" ${ready ? '' : 'disabled'}>${ready ? '決定' : attackStep && !planComplete() ? '攻めの作戦を選んでください' : '守りの方針を選んでください'}</button></div></div>`;
+  return out;
+}
+
+function revealView() {
+  const plan = M.plan.P; const cs = M.stance.C;
+  const e = evalAttack({ att: M.P, def: M.C, ...plan, stance: cs, turn: M.turn, defCardId: M.plan.C && M.plan.C.cardId });
+  let out = `<div class="res p"><div class="who">相手の守備は「${STANCES[cs].name}」</div>
+   <p class="play">あなたの作戦：${CARDS[plan.cardId].name}（${surname(M.P.players[plan.h])}${plan.o != null ? '→' + surname(M.P.players[plan.o]) : ''}）</p>
+   <div class="qline"><span>このままだと</span><span class="qbadge ${QUALITY[e.quality].cls}">${QUALITY[e.quality].name}</span>${e.quality !== 'TO' ? `<span class="muted small">${SHOT_NAME[e.shot]}・成功率 ${Math.round(bagProb(M.P, e.quality) * 100)}%</span>` : ''}</div>`;
+  if (M.phase === 'timeout') {
+    const C = CARDS[plan.cardId];
+    out += `<div class="callout">タイムアウト中。作戦カードはそのまま、起点と相手役を変えられます。</div>
+    <div class="step">${C.h}</div>${chipsHtml(M.P, 'th', plan.h)}${C.o ? `<div class="step">${C.o}</div>${chipsHtml(M.P, 'to', plan.o, plan.h)}` : ''}
+    </div><div class="commit"><div class="inner"><button class="btn go block" data-act="goresolve">この形で攻める</button></div></div>`;
+  } else {
+    out += `</div><div class="commit"><div class="inner row" style="flex-wrap:nowrap">${M.P.timeout ? `<button class="btn ghost" style="flex:1" data-act="timeout">タイムアウト（残り1）</button>` : ''}<button class="btn go" style="flex:1.4" data-act="goresolve">攻める</button></div></div>`;
+  }
+  return out;
+}
+
+function eventView(ev) {
+  const team = M[ev.side]; const isP = ev.side === 'P';
+  const e = ev.e; const hp = team.players[ev.plan.h];
+  const sp = team.players[e.shooter];
+  const reasons = e.reasons.map(r => { const cls = r.base ? 'base' : r.info ? (r.good ? 'pos' : 'inf') : r.v > 0 ? 'pos' : 'neg'; const v = r.base ? r.v : r.info ? '・' : r.v <= -9 ? '×' : (r.v > 0 ? '+' + r.v : r.v); return `<li class="${cls}"><span class="v">${v}</span><span>${r.t}</span></li>`; }).join('');
+  let result;
+  const who = isP ? 'あなた' : '相手';
+  const verdict = ev.pts ? `<div class="verdict ok">${who}の攻撃は成功 <b>+${ev.pts}点</b></div>` : `<div class="verdict ng">${who}の攻撃は失敗 <b>0点</b></div>`;
+  if (e.quality === 'TO') result = `<div class="seq"><div class="sq"><div class="coin to">TO</div><span>${e.steal ? 'ボールを奪われた' : 'シュートまで持ち込めなかった'}</span></div></div>`;
+  else {
+    const first = `<div class="sq"><div class="coin ${ev.draw ? 'hit' : 'miss'}">${ev.draw ? '成功' : '失敗'}</div><span>${surname(sp)}の${SHOT_NAME[e.shot]}<br><small class="muted">「${QUALITY[e.quality].name}」の袋から</small></span></div>`;
+    let second = '';
+    if (ev.reb) {
+      if (ev.reb.won) second = `<span class="arrow" aria-hidden="true">↓</span><div class="sq"><div class="coin ${ev.put.draw ? 'hit' : 'miss'}">${ev.put.draw ? '成功' : '失敗'}</div><span>${surname(team.players[ev.put.idx])}のリバウンド押し込み<br><small class="muted">「コンテスト」の袋から</small></span></div>`;
+      else second = `<span class="arrow" aria-hidden="true">↓</span><div class="sq"><div class="coin miss" style="font-size:.8rem">守備</div><span>${isP ? '相手' : 'あなた'}がリバウンドを確保</span></div>`;
+    }
+    result = `<div class="seq">${first}${second}</div>`;
+  }
+  let reb = '';
+  if (ev.reb) reb = `<p class="small muted">リバウンド争い：攻撃側 ${ev.reb.o} 対 守備側 ${ev.reb.d}（攻撃側が2以上上回るとオフェンスリバウンド）</p>`;
+  const hot = ev.hotGain ? `<div class="callout">${ev.hotGain === 'P' ? 'あなた' : '相手'}に流れが来た！ 次の攻撃は+2</div>` : '';
+  const to = ev.cpuTimeout ? `<div class="callout">相手がタイムアウトを取り、起点を変えてきた</div>` : '';
+  return `<div class="res ${isP ? 'p' : 'c'}"><div class="who">${isP ? 'あなたの攻撃' : '相手の攻撃'}</div>
+  ${to}<p class="play">${CARDS[ev.plan.cardId].name}：${surname(hp)}${ev.plan.o != null ? ' → ' + surname(team.players[ev.plan.o]) : ''}<br><span class="muted small">${isP ? '相手' : 'あなた'}の守備：${STANCES[ev.stance].name}</span></p>
+  <div class="qline"><span class="qbadge ${QUALITY[e.quality].cls}">${QUALITY[e.quality].name}</span><span class="muted small">合計 ${e.steal ? '−' : e.q}（6以上オープン・3〜5コンテスト・1〜2タフ）</span></div>
+  ${verdict}${result}${reb}${hot}
+  <details ${S.hints ? 'open' : ''}><summary class="small" style="cursor:pointer;font-weight:700">なぜこうなった？</summary><ul class="why">${reasons}</ul></details></div>
+  <div class="commit"><div class="inner"><button class="btn go block" data-act="next">次へ</button></div></div>`;
+}
+
+function teamPanel(T, me) {
+  const sh = T.shape;
+  const hist = STANCE_IDS.filter(x => T.stanceHist[x]).map(x => `${STANCES[x].short}${T.stanceHist[x]}`).join('・') || 'まだなし';
+  return `<details class="opp ${me ? 'mine' : ''}"><summary>${me ? '自分のチームの情報' : '相手チームの情報'}</summary><div class="inner">
+   <div class="shape small" style="margin-bottom:6px"><span>外の脅威 <span class="st">${starStr(sh.gravity)}</span></span><span>連動 <span class="st">${starStr(sh.flow)}</span></span><span>ゴール下 ${sh.crowded ? '<b style="color:var(--bad)">混み合う</b>' : 'すっきり'}</span><span>リバウンド ${sh.reb}</span></div>
+   <p class="small muted">これまでの守備：${hist}</p>
+   ${T.players.map(p => `<div class="oppp"><span class="dot" style="background:${me ? 'var(--me)' : 'var(--cpu)'}">${p.num}</span><span style="flex:1"><b>${surname(p)}</b> <span class="muted">${p.pos}</span><br>${tagsHtml(p, p.trait)}${miniStats(p)}</span><span class="small" style="text-align:right;white-space:nowrap">体力 <b style="color:${p.st < 40 ? 'var(--bad)' : 'inherit'}">${p.st}</b>${p.st < 40 ? '<br><span style="color:var(--bad)">疲労</span>' : ''}${p.pts ? `<br>${p.pts}点` : ''}</span></div>`).join('')}
+   <p class="small" style="margin-top:8px"><b>作戦カード</b></p><div class="small">${T.deck.map(c => `<span class="tag">${CARDS[c.id].name} 読まれ度${c.read}</span>`).join('')}</div>
+   ${me ? '' : `<p class="small" style="margin-top:8px"><b>相手のシュートチップ袋</b></p>${bagsHtml(T)}`}
+   <p class="small muted" style="margin-top:6px">タイムアウト：${T.timeout ? '残り1' : '使用済み'}</p>
+  </div></details>`;
+}
+
+SCREENS.match = () => {
+  if (!M) return SCREENS.home();
+  const planPlan = (M.phase === 'plan' || M.phase === 'plan-late') ? UI.sel : (M.plan.P || null);
+  let body = '';
+  if (M.phase === 'plan' || M.phase === 'plan-late') body = planView();
+  else if (M.phase === 'reveal' || M.phase === 'timeout') body = revealView();
+  else if (M.phase === 'resolve') body = eventView(M.cur);
+  const cardForCourt = planPlan ? planPlan.cardId : null;
+  return `<div class="wrap">${scoreboard()}
+   ${courtSvg(M.P, planPlan, cardForCourt)}
+   <div class="row small" style="margin:8px 0 4px"><b>あなたのシュートチップ袋</b><span class="sp"></span><span class="muted">タイムアウト ${M.P.timeout ? '残り1' : '使用済み'}</span></div>
+   ${bagsHtml(M.P)}
+   ${M.P.activeSet && M.P.activeSet.turn === M.turn ? `<div class="callout">前のターンの${CARDS[M.P.activeSet.id].name}の効果が続いています</div>` : ''}
+   ${teamPanel(M.P, true)}${teamPanel(M.C, false)}
+   ${body}
+   <div style="margin-top:24px;text-align:center"><button class="back" data-act="quit">試合をやめる</button></div>
+  </div>`;
+};
+
+/* flow */
+function commit() {
+  const s = UI.sel;
+  if (M.phase === 'plan') {
+    M.stance.P = s.stance;
+    if (!playerLate()) M.plan.P = { cardId: s.cardId, h: s.h, o: C_o(s) };
+    M.stance.C = cpuChooseStance(M);
+    if (!cpuLate()) M.plan.C = cpuChooseAttack(M, null);
+    M.queue = turnOrder(M).slice();
+    M.revealedP = false;
+    step();
+  } else if (M.phase === 'plan-late') {
+    M.plan.P = { cardId: s.cardId, h: s.h, o: C_o(s) };
+    step();
+  }
+}
+function C_o(s) { return CARDS[s.cardId].o ? s.o : null; }
+function step() {
+  if (!M.queue.length) {
+    endTurn(M);
+    if (M.over) return finish();
+    UI.sel = { cardId: null, h: null, o: null, stance: null };
+    M.phase = 'plan'; render(); window.scrollTo({ top: 0 }); return;
+  }
+  const side = M.queue[0];
+  if (!M.plan[side]) {
+    if (side === 'C') { M.plan.C = cpuChooseAttack(M, null); }
+    else { UI.sel = { cardId: null, h: null, o: null, stance: M.stance.P }; M.phase = 'plan-late'; render(); return; }
+  }
+  if (side === 'P' && !M.revealedP) { M.revealedP = true; M.phase = 'reveal'; render(); return; }
+  let cpuTO = false;
+  if (side === 'C') cpuTO = cpuMaybeTimeout(M);
+  const o2 = side === 'P' ? 'C' : 'P';
+  const balE = evalAttack({ att: M[side], def: M[o2], ...M.plan[side], stance: 'balance', turn: M.turn, defCardId: M.plan[o2] ? M.plan[o2].cardId : null });
+  const ev = resolvePossession(M, side);
+  ev.balQ = balE.q;
+  ev.cpuTimeout = cpuTO;
+  M.cur = ev; M.phase = 'resolve'; render();
+  const el = document.querySelector('.res'); if (el) el.scrollIntoView({ block: 'start', behavior: 'smooth' });
+}
+function finish() {
+  const w = M.P.score > M.C.score, d = M.P.score === M.C.score;
+  if (w) { S.rec.w++; S.packs++; } else if (d) S.rec.d++; else S.rec.l++;
+  save();
+  lastResult = { w, d }; view = 'result'; render(); window.scrollTo(0, 0);
+}
+
+SCREENS.result = () => {
+  const { w, d } = lastResult;
+  const evs = M.events;
+  const rows = [];
+  let turnSet = [...new Set(evs.map(e => e.turn))];
+  turnSet.forEach(t => {
+    const pe = evs.find(e => e.turn === t && e.side === 'P'), ce = evs.find(e => e.turn === t && e.side === 'C');
+    const cell = (ev, team) => ev ? `${CARDS[ev.plan.cardId].name}<br><span class="${QUALITY[ev.e.quality].cls}">${QUALITY[ev.e.quality].name}</span> ${ev.pts ? '+' + ev.pts : '0'}${ev.put && ev.put.draw ? '<span class="muted">（リバウンドから）</span>' : ''}` : '';
+    rows.push(`<tr><td>${t > 6 ? '延長' : t}</td><td>${cell(pe)}<br><span class="muted small">相手守備:${pe ? STANCES[pe.stance].short : ''}</span></td><td>${cell(ce)}<br><span class="muted small">あなた守備:${ce ? STANCES[ce.stance].short : ''}</span></td></tr>`);
+  });
+  // turning point: possession where lead changed last
+  let a = 0, b = 0, lastLead = 0, turning = null;
+  evs.forEach(ev => { if (ev.side === 'P') a += ev.pts; else b += ev.pts; const l = Math.sign(a - b); if (l !== 0 && l !== lastLead) { turning = ev; lastLead = l; } });
+  const all = M.P.players.map(p => ({ p, side: 'あなた' })).concat(M.C.players.map(p => ({ p, side: '相手' })));
+  const mvp = all.sort((x, y) => y.p.pts - x.p.pts)[0];
+  const openP = evs.filter(e => e.side === 'P' && e.e.quality === 'OPEN').length;
+  const reads = evs.filter(e => e.side === 'C' && (e.e.steal || e.e.q < e.balQ)).length;
+  return `<div class="wrap"><div class="final"><div class="wl" style="color:${w ? 'var(--me)' : d ? 'var(--ink2)' : 'var(--cpu)'}">${w ? '勝利' : d ? '引き分け' : '敗戦'}</div><div class="sc">${M.P.score} - ${M.C.score}</div><p class="muted">${M.C.name}${M.ot ? `・延長${M.ot}` : ''}</p></div>
+  ${w ? `<div class="callout">勝利ボーナス：パックを1つ獲得しました</div>` : ''}
+  <div class="panel"><h3>試合のポイント</h3>
+  <p class="small">MVP：<b>${mvp.p.name}</b>（${mvp.side}・${mvp.p.pts}点）</p>
+  <p class="small">あなたがオープンを作れた回数：<b>${openP}</b> / ${evs.filter(e => e.side === 'P').length}</p>
+  <p class="small">あなたの守備が相手の攻撃を弱めた回数：<b>${reads}</b>（「バランス」より効いた回数）</p>
+  ${turning ? `<p class="small">流れを変えたプレー：${turning.turn > 6 ? '延長' : '第' + turning.turn + 'ターン'}、${turning.side === 'P' ? 'あなた' : '相手'}の${CARDS[turning.plan.cardId].name}</p>` : ''}</div>
+  <div class="panel"><h3>全ターンの記録</h3><p class="small muted">相手が何を選んでいたかも、ここで全部わかります。</p><div class="tablewrap"><table class="log"><thead><tr><th>T</th><th>あなたの攻撃</th><th>相手の攻撃</th></tr></thead><tbody>${rows.join('')}</tbody></table></div></div>
+  <div class="menu"><button class="btn go block" data-act="rematch">もう一度</button>${S.packs ? `<button class="btn primary block" data-act="openpackscreen">パックを開ける</button>` : ''}<button class="btn block" data-go="team">チームを変える</button><button class="btn ghost block" data-go="home">ホームへ</button></div></div>`;
+};
+
+SCREENS.howto = () => `<div class="wrap howto">${topBar('あそびかた')}
+<p>あなたはヘッドコーチ。選手を直接は動かしません。5人の組み合わせと作戦で、相手の守備にズレを作ります。</p>
+<h3>1. チームを作る</h3><p>年俸の合計が100以内になるように5人を選びます。高い選手ばかりは集められません。安くても、組み合わせ次第で光る選手がいます。</p>
+<p>選手にはタグがあります。<b>スペーサー</b>が多いと外の脅威が上がり、中へのドライブが通りやすくなります。<b>コネクター</b>や<b>スラッシャー</b>が多いと連動が上がり、パス系の作戦が強くなります。守備タグ（アンカー、チェイサーなど）は相手の攻撃を弱めます。</p>
+<h3>2. 作戦カードを5枚えらぶ</h3><p>毎ターン、5枚のうちどれを使ってもかまいません。ただし、使った作戦は相手に「読まれ度」が2たまり、次に使うとその分だけシュートの質が下がります。使わなかったターンの終わりに読まれ度は1ずつ減っていきます。同じ作戦を続けるとすぐに止められてしまうので、別の作戦をはさみながら、ここぞという場面で得意な作戦を使いましょう。</p>
+<h3>3. 毎ターン、攻めと守りを同時に決める</h3><p>作戦カード、起点の選手、相手役を決め、同時に「相手の攻撃をどう守るか」も決めます。相手も同じタイミングで決めています。</p>
+<p>守りの方針は「正解を当てる」ものではなく「何を捨てるか」を決めるもの。インサイド警戒はゴール下に強いぶん3Pを許し、外郭警戒はその逆です。</p>
+<h3>4. シュートの質とチップ袋</h3><p>作戦と守備の相性、読まれ度などでシュートの質が「オープン・コンテスト・タフ」に決まります。ここに運は入りません。</p><p>成否はそれぞれの袋からチップを引いて決めます。引いたチップは戻らないので、外れが続けば、残りは当たりが濃くなります。袋の中身はいつでも見られます。</p>
+<h3>5. 流れ・タイムアウト・最後の攻撃</h3><p>得点や守備の成功で流れゲージが動き、端まで行くと次の攻撃が+2。タイムアウトは1試合1回。相手の守備を見たあとに、起点と相手役を変えられます。</p><p>試合の最初に「最後の攻撃権」がどちらにあるか決まります。持っている側は第6ターンで、相手の結果を見てから攻め方を選べます。</p>
+<h3>ヒント</h3><p>ヒント表示ありにすると、相手の守備ごとに自分の攻撃がどうなるか、相手の最善手が何かが見えます。慣れたらヒントなしにすると、もっと読み合いになります。</p>
+<div class="menu" style="margin-top:20px"><button class="btn go block" data-go="team">試合をする</button></div></div>`;
+
+SCREENS.about = () => `<div class="wrap howto">${topBar('このプロトタイプについて')}
+<p>既存のデジタル選手カードのコレクションに「集めたカードで考えて戦う」遊びを追加する、という提案のための試作版です。登場する選手・クラブはすべて架空です。</p>
+<h3>大事にしていること</h3>
+<p><b>コレクションの価値と試合の強さを分けています。</b>レアなカードは見た目が豪華になり、特性のバリエーションが1つ増えるだけ。能力値は同じです。持っていない選手も「スカウト」として使えるので、勝敗はお金ではなく読みで決まります。</p>
+<p><b>CPUはズルをしません。</b>同じ年俸上限、同じカードの制限で戦い、選手も作戦も全部公開されています。強さの差は読みの深さだけです。</p>
+<p><b>運は見える形にしています。</b>シュートの質は運なしで決まり、成否だけをチップ袋で決めます。袋の中身は公開です。</p>
+<p><b>負けた理由がわかるようにしています。</b>1プレーごとに「なぜこうなった？」を表示し、試合後には相手の選択も全部公開します。</p>
+<h3>リーグと組めたら広がること</h3>
+<p>実在選手のカードを連動させる、実際の試合の終盤を「詰将棋」として出題する、実際の成績で特性を更新する、といった発展を想定しています。選手の評価の見せ方や、カードの入手方法、課金の有無は、リーグや運営会社と相談して決める前提のパラメータとして作っています。</p>
+<p class="muted small">データはこの端末のブラウザにだけ保存されます。</p>
+<div class="menu" style="margin-top:14px"><button class="btn ghost block" data-act="reset">データをリセット</button></div></div>`;
+
+/* ---------- pack logic ---------- */
+function openPack() {
+  const free = S.lastFree !== today();
+  if (free) S.lastFree = today(); else if (S.packs > 0) S.packs--; else return;
+  packResult = [0, 1, 2].map(() => {
+    const p = PLAYERS[Math.floor(Math.random() * PLAYERS.length)];
+    const v = Math.random() < 0.2 ? 'moment' : 'base';
+    const k = `${p.id}:${v}`; const isNew = !S.owned[k];
+    S.owned[k] = (S.owned[k] || 0) + 1;
+    return { id: p.id, v, isNew, open: false };
+  });
+  save(); view = 'pack'; render();
+}
+
+/* ---------- events ---------- */
+app.addEventListener('click', ev => {
+  const stop = ev.target.closest('[data-stop]');
+  const t = ev.target.closest('[data-go],[data-act]');
+  if (!t) return;
+  if (stop && t.dataset.act === 'closemodal' && t.classList.contains('modal')) return;
+  if (t.dataset.go) {
+    if (view === 'match' && M && !M.over) { if (!confirm('試合をやめますか？')) return; }
+    view = t.dataset.go; if (view === 'pack') packResult = null; modal = null; render(); window.scrollTo(0, 0); return;
+  }
+  const a = t.dataset.act, id = t.dataset.id, v = t.dataset.v;
+  switch (a) {
+    case 'closemodal': modal = null; render(); break;
+    case 'detail': modal = { html: detailHtml(id, v) }; render(); break;
+    case 'cf': UI.cf = v; render(); break;
+    case 'pf': UI.pf = v; render(); break;
+    case 'tb': UI.tb = v; render(); break;
+    case 'openpackscreen': packResult = null; view = 'pack'; render(); window.scrollTo(0, 0); break;
+    case 'openpack': openPack(); break;
+    case 'flip': packResult[+t.dataset.i].open = true; render(); break;
+    case 'flipall': packResult.forEach(c => (c.open = true)); render(); break;
+    case 'add': if (S.team.roster.length < 5 && !S.team.roster.includes(id)) { S.team.roster.push(id); save(); render(); } break;
+    case 'rm': S.team.roster = S.team.roster.filter(x => x !== id); save(); render(); break;
+    case 'var': S.team.variants[id] = v; save(); render(); break;
+    case 'deck': { const d = S.team.deck; if (d.includes(id)) S.team.deck = d.filter(x => x !== id); else if (d.length < 5) d.push(id); save(); render(); break; }
+    case 'opp': S.oppId = id; save(); render(); break;
+    case 'diff': S.diff = v; save(); render(); break;
+    case 'hints': S.hints = v === '1'; save(); render(); break;
+    case 'start': startMatch(); break;
+    case 'rematch': startMatch(); break;
+    case 'card': UI.sel.cardId = id; { const st = CARDS[id].stat; let bi = 0, bv = -1; M.P.players.forEach((p, i) => { const val = st === 'ISO' ? Math.max(p.s.FIN, p.s.SHT) : p.s[st]; const sc = val * 100 + p.st; if (sc > bv) { bv = sc; bi = i; } }); UI.sel.h = bi; } if (CARDS[id].o && (UI.sel.o == null || UI.sel.o === UI.sel.h)) UI.sel.o = null; render(); break;
+    case 'h': UI.sel.h = +t.dataset.i; if (UI.sel.o === UI.sel.h) UI.sel.o = null; render(); break;
+    case 'o': UI.sel.o = +t.dataset.i; render(); break;
+    case 'stance': UI.sel.stance = v; render(); break;
+    case 'commit': commit(); break;
+    case 'timeout': M.P.timeout = 0; M.P.players.forEach(p => (p.st = Math.min(100, p.st + 20))); M.phase = 'timeout'; render(); break;
+    case 'th': M.plan.P.h = +t.dataset.i; if (M.plan.P.o === M.plan.P.h) { M.plan.P.o = M.P.players.findIndex((_, i) => i !== M.plan.P.h); } render(); break;
+    case 'to': M.plan.P.o = +t.dataset.i; render(); break;
+    case 'goresolve': M.phase = 'go'; step(); break;
+    case 'next': M.queue.shift(); step(); break;
+    case 'quit': if (confirm('試合をやめますか？（記録には残りません）')) { M = null; view = 'home'; render(); } break;
+    case 'reset': if (confirm('コレクションと成績をすべて消して、最初からにしますか？')) { S = structuredClone(DEFAULT_SAVE); save(); view = 'home'; render(); } break;
+  }
+});
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && modal) { modal = null; render(); } });
+
+load(); render();
+
+})();
+</script>
+</body>
+</html>
