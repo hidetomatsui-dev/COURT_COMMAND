@@ -300,6 +300,12 @@ details.gl dd{margin:2px 0 0;font-size:.9rem;line-height:1.6}
 #toast{position:fixed;left:50%;bottom:calc(90px + env(safe-area-inset-bottom,0px));transform:translate(-50%,20px);background:var(--ink);color:var(--bg);padding:10px 18px;border-radius:999px;font-weight:700;font-size:.9rem;opacity:0;pointer-events:none;transition:.25s;z-index:60}
 #toast.show{opacity:1;transform:translate(-50%,0)}
 .erow .own{width:34px;text-align:center}
+.arow{display:flex;gap:10px;align-items:center;font-size:.9rem;padding:4px 0;border-top:1px solid var(--line)}
+.arow .av{width:36px;height:36px;border-radius:9px;overflow:hidden;flex:none}.arow .av svg{width:36px;height:36px;display:block}
+.whytail{margin-top:8px;border-top:2px solid var(--line);padding-top:6px}
+.wt-row{display:grid;grid-template-columns:auto auto 1fr;gap:8px;align-items:baseline;font-size:.86rem;padding:3px 0}
+.wt-row > span:first-child{color:var(--ink2);white-space:nowrap}
+.wt-row > b{font-family:var(--display);font-weight:900;min-width:2.6em;text-align:right}
 
 </style>
 </head>
@@ -715,6 +721,7 @@ function drain(p, amt) {
   p.st = Math.max(0, Math.round(p.st - amt * mult));
 }
 
+function bagCount(team, q) { const b = team.bags[q].length ? team.bags[q] : null; if (!b) { const [h, m] = BAG_BASE[q]; return { h, m }; } const h = b.filter(x => x).length; return { h, m: b.length - h }; }
 function drawChip(team, q) {
   if (!team.bags[q].length) team.bags[q] = makeBag(q);
   return team.bags[q].pop();
@@ -729,6 +736,7 @@ function resolvePossession(m, side) {
   att.hot = false;
   let scored = false;
   if (e.quality !== 'TO') {
+    ev.bag = bagCount(att, e.quality);
     ev.draw = drawChip(att, e.quality);
     if (ev.draw) { ev.pts = e.shot === 'THREE' ? 3 : 2; att.players[e.shooter].pts += ev.pts; scored = true; att.lastScorer = att.players[e.shooter].id; }
     else {
@@ -738,8 +746,9 @@ function resolvePossession(m, side) {
       ev.reb = { o, d, won: o > d + 1 };
       if (o > d + 1) {
         const bi = att.players.map((p, i) => [eff(p, 'REB'), i]).sort((a, b) => b[0] - a[0])[0][1];
+        const putBag = bagCount(att, 'CONTESTED');
         const chip = drawChip(att, 'CONTESTED');
-        ev.put = { idx: bi, draw: chip, pts: chip ? 2 : 0 };
+        ev.put = { idx: bi, draw: chip, pts: chip ? 2 : 0, bag: putBag };
         if (chip) { ev.pts = 2; att.players[bi].pts += 2; scored = true; att.lastScorer = att.players[bi].id; }
       }
     }
@@ -784,6 +793,79 @@ function endTurn(m) {
 
 /* order: team WITHOUT last possession attacks first */
 function turnOrder(m) { return [other(m.last), m.last]; }
+
+/* ---------- auto draft (CPU team building under the same rules) ---------- */
+const AUTO_TYPES = {
+  three: { label: '外からの攻撃特化', team: 'シューター軍団', personality: 'three', color: '#9B5CF6', desc: '3Pが得意な選手を集め、外から撃ってくる。' },
+  inside: { label: '中の攻撃特化', team: 'インサイド部隊', personality: 'inside', color: '#C2410C', desc: 'ゴール下とリバウンドに強い選手で押し込んでくる。' },
+  defense: { label: '守備特化', team: '鉄壁ディフェンス', personality: 'defense', color: '#0F766E', desc: '守備タグ持ちを集め、しつこく守ってくる。' },
+  balance: { label: 'バランス', team: 'バランスチーム', personality: 'balance', color: '#B45309', desc: '穴の少ない万能型。' }
+};
+const COACHES = ['青木', '石田', '上野', '遠藤', '岡本', '片山', '菊池', '久保', '小西', '斉藤', '篠原', '杉本', '高橋', '千葉', '土屋', '中村', '西川', '野口', '浜田', '平野', '藤井', '松本', '村上', '森田', '山口', '吉田'];
+function playerFit(p, type) {
+  const s = p.s, hasT = t => p.off.includes(t) || p.def.includes(t);
+  if (type === 'three') return s.SHT * 3 + (hasT('Spacer') ? 4 : 0) + (['corner', 'bigshot', 'hothand'].includes(p.trait) ? 2 : 0) + s.PAS * 0.5;
+  if (type === 'inside') return s.FIN * 3 + s.REB * 1.5 + (hasT('Roller') ? 3 : 0) + (hasT('Slasher') ? 2 : 0) + (hasT('Anchor') ? 1 : 0);
+  if (type === 'defense') return s.DEF * 3 + p.def.length * 3 + s.STA + (['pest', 'wall', 'rimguard'].includes(p.trait) ? 2 : 0);
+  return STAT_KEYS.reduce((a, k) => a + s[k], 0) + (p.off.length + p.def.length) * 1.5;
+}
+function rosterScore(ps, type) {
+  let v = ps.reduce((a, p) => a + playerFit(p, type), 0);
+  const sh = teamShape(ps);
+  if (!ps.some(p => p.s.PAS >= 4)) v -= 8;
+  if (sh.crowded) v -= type === 'inside' ? 2 : 6;
+  if (type === 'three') v += sh.gravity * 3;
+  if (type === 'inside') v += sh.reb * 1.2;
+  if (type === 'balance') v += (sh.gravity + sh.flow) * 1.5;
+  const cover = ['Anchor', 'Chaser', 'Lockdown', 'Switch'].filter(t => ps.some(p => p.def.includes(t))).length;
+  v += cover * (type === 'defense' ? 4 : 1.5);
+  v += new Set(ps.map(p => p.pos)).size;
+  return v;
+}
+function pickDeck(ids, type) {
+  const t = makeTeam('C', '', '', ids, {}, [], AUTO_TYPES[type].personality);
+  const dummy = { players: [] };
+  const scored = DECK_CARDS.map(id => {
+    let best = null;
+    for (let h = 0; h < 5; h++) {
+      const os = CARDS[id].o ? [0, 1, 2, 3, 4].filter(o => o !== h) : [null];
+      os.forEach(o => { const e = evalAttack({ att: t, def: dummy, cardId: id, h, o, stance: 'balance', turn: 1 }); if (!best || e.q > best.q) best = e; });
+    }
+    let sc = best.q + Math.random() * 0.8;
+    if (type === 'three' && best.shot === 'THREE') sc += 3;
+    if (type === 'inside' && best.shot === 'INSIDE') sc += 3;
+    if (CARDS[id].type === 'SET') sc += 0.3;
+    return { id, sc, shot: best.shot };
+  }).sort((a, b) => b.sc - a.sc);
+  const deck = scored.slice(0, 5);
+  // keep at least one inside and one outside option so the deck can rotate
+  ['THREE', 'INSIDE'].forEach(need => {
+    if (!deck.some(c => c.shot === need)) { const add = scored.find(c => c.shot === need && !deck.includes(c)); if (add) { deck.pop(); deck.push(add); } }
+  });
+  return deck.map(c => c.id);
+}
+function autoDraft(type, excludeIds) {
+  if (!AUTO_TYPES[type]) type = Object.keys(AUTO_TYPES)[Math.floor(Math.random() * 4)];
+  const pool = PLAYERS.filter(p => !(excludeIds || []).includes(p.id));
+  const n = pool.length, res = [];
+  for (let a = 0; a < n; a++) for (let b = a + 1; b < n; b++) for (let c = b + 1; c < n; c++) for (let d = c + 1; d < n; d++) {
+    const sal4 = pool[a].sal + pool[b].sal + pool[c].sal + pool[d].sal;
+    if (sal4 > 100) continue;
+    for (let e = d + 1; e < n; e++) {
+      if (sal4 + pool[e].sal > 100) continue;
+      const ps = [pool[a], pool[b], pool[c], pool[d], pool[e]];
+      res.push({ ps, v: rosterScore(ps, type) });
+    }
+  }
+  res.sort((x, y) => y.v - x.v);
+  const top = res.slice(0, 15);
+  const pick = top[Math.floor(Math.random() * top.length)];
+  const posOrder = { PG: 0, SG: 1, SF: 2, PF: 3, C: 4 };
+  const roster = pick.ps.slice().sort((x, y) => posOrder[x.pos] - posOrder[y.pos]).map(p => p.id);
+  const T = AUTO_TYPES[type];
+  const coach = COACHES[Math.floor(Math.random() * COACHES.length)];
+  return { id: 'auto', auto: true, type, coach, name: `${coach}HCの${T.team}`, personality: T.personality, color: T.color, desc: T.desc, roster, deck: pickDeck(roster, type) };
+}
 
 /* ===== UI ===== */
 const SAVE_KEY = 'courtcommand_v1';
@@ -943,10 +1025,31 @@ SCREENS.team = () => {
   </div>`;
 };
 
+function autoPanel() {
+  const at = S.autoType || 'random';
+  const T = S.autoTeam && S.autoTeam.roster.every(id => PMAP[id]) ? S.autoTeam : null;
+  const on = S.oppId === 'auto' && T;
+  const types = [['three', '外から'], ['inside', '中から'], ['defense', '守備'], ['balance', 'バランス'], ['random', 'おまかせ']];
+  let card = '';
+  if (T) {
+    const sal = T.roster.reduce((a, id) => a + PMAP[id].sal, 0);
+    card = `<button class="panel autocard" style="display:block;width:100%;text-align:left;margin:10px 0 0;${on ? 'outline:3px solid ' + T.color : ''}" data-act="opp" data-id="auto" aria-pressed="${!!on}">
+      <div class="row"><span class="tag" style="background:${T.color};color:#fff">${AUTO_TYPES[T.type].label}</span><span class="sp"></span><span class="small muted">年俸 ${sal}/100</span></div>
+      <h3 style="color:${T.color};margin-top:6px">${T.name}</h3><p class="small">${T.desc}</p>
+      <div class="plist" style="margin-top:6px">${T.roster.map(id => { const p = PMAP[id]; return `<div class="arow"><span class="av" style="background:${CLUBS[p.club].color}">${avatar(p)}</span><span><b>${p.name}</b> <span class="muted small">${p.pos}・年俸${p.sal}</span><br>${tagsHtml(p, p.trait)}</span></div>`; }).join('')}</div>
+      <p class="small" style="margin-top:8px">${T.deck.map(id => `<span class="tag">${CARDS[id].name}</span>`).join('')}</p></button>`;
+  }
+  return `<div class="panel"><h3>自動編成の相手</h3><p class="small muted">型を選ぶと、CPUがあなたと同じルール（年俸100以内・作戦カード5枚）で5人と作戦を選びます。あなたのチームの選手は選ばれません。</p>
+  <div class="seg" style="margin-top:8px" role="group" aria-label="相手の型">${types.map(([k, n]) => `<button data-act="atype" data-v="${k}" aria-pressed="${at === k}">${n}</button>`).join('')}</div>
+  <button class="btn primary block" style="margin-top:10px" data-act="draft">${T ? '引き直す' : 'この型で編成する'}</button>
+  ${card}</div>`;
+}
 SCREENS.opp = () => {
   const sel = S.oppId;
   return `<div class="wrap">${topBar('対戦相手', 'team')}
-  <p class="muted small">相手の選手と作戦カードは全部見えています。CPUもあなたと同じルール（年俸100・カード5枚）で戦います。</p>
+  <p class="muted small">相手の選手と作戦カードは試合前に全部見えています。CPUもあなたと同じルールで戦います。</p>
+  ${autoPanel()}
+  <h3 style="margin:20px 0 4px">定番の相手</h3><p class="small muted">いつも同じ5人と作戦で戦う相手です。</p>
   ${CPU_TEAMS.map(t => { const on = t.id === sel; return `<button class="panel" style="display:block;width:100%;text-align:left;${on ? 'outline:3px solid ' + t.color : ''}" data-act="opp" data-id="${t.id}" aria-pressed="${on}">
     <div class="row"><h3 style="color:${t.color}">${t.name}</h3></div><p class="small">${t.desc}</p>
     <p class="small muted">${t.roster.map(id => `${PMAP[id].name}（${PMAP[id].pos}）`).join('、')}</p>
@@ -960,7 +1063,7 @@ SCREENS.opp = () => {
 
 /* ---------- match ---------- */
 function startMatch() {
-  const t = CPU_TEAMS.find(x => x.id === S.oppId) || CPU_TEAMS[0];
+  const t = (S.oppId === 'auto' && S.autoTeam && S.autoTeam.roster.every(id => PMAP[id])) ? S.autoTeam : (CPU_TEAMS.find(x => x.id === S.oppId) || CPU_TEAMS[0]);
   const variants = {}; S.team.roster.forEach(id => { if (S.team.variants[id] === 'moment' && owns(id, 'moment')) variants[id] = 'moment'; });
   const P = makeTeam('P', myName(), 'var(--me)', S.team.roster, variants, S.team.deck, 'balance');
   const C = makeTeam('C', t.name, t.color, t.roster, {}, t.deck, t.personality);
@@ -1099,6 +1202,17 @@ function revealView() {
   return out;
 }
 
+function whyTail(ev) {
+  const e = ev.e;
+  if (e.quality === 'TO') return `<div class="whytail"><div class="wt-row"><span>合計</span><b>${e.steal ? '奪われた' : e.q}</b><span>→ ターンオーバー（シュートまで持ち込めない）</span></div></div>`;
+  const band = e.quality === 'OPEN' ? '6以上' : e.quality === 'CONTESTED' ? '3〜5' : '1〜2';
+  const pct = b => Math.round(b.h / (b.h + b.m) * 100);
+  let h = `<div class="whytail"><div class="wt-row"><span>① 合計</span><b>${e.q}</b><span>→ <b class="${QUALITY[e.quality].cls}">${QUALITY[e.quality].name}</b>（${band}）</span></div>`;
+  if (ev.bag) h += `<div class="wt-row"><span>② 袋</span><b>${pct(ev.bag)}%</b><span>「${QUALITY[e.quality].name}」の袋は 成功${ev.bag.h}・失敗${ev.bag.m} → <b>${ev.draw ? '成功' : '失敗'}</b>を引いた</span></div>`;
+  if (ev.put && ev.put.bag) h += `<div class="wt-row"><span>③ リバウンド</span><b>${pct(ev.put.bag)}%</b><span>「コンテスト」の袋は 成功${ev.put.bag.h}・失敗${ev.put.bag.m} → <b>${ev.put.draw ? '成功' : '失敗'}</b>を引いた</span></div>`;
+  if (!ev.pts && ev.draw === 0 && e.quality !== 'TOUGH') h += `<p class="small muted" style="margin:6px 0 0">組み立ては悪くありませんでしたが、チップで外れました。外れたチップは袋に戻らないので、次は当たりやすくなります。</p>`;
+  return h + '</div>';
+}
 function eventView(ev) {
   const team = M[ev.side]; const isP = ev.side === 'P';
   const e = ev.e; const hp = team.players[ev.plan.h];
@@ -1125,7 +1239,7 @@ function eventView(ev) {
   ${to}<p class="play">${CARDS[ev.plan.cardId].name}：${surname(hp)}${ev.plan.o != null ? ' → ' + surname(team.players[ev.plan.o]) : ''}<br><span class="muted small">${isP ? '相手' : 'あなた'}の守備：${STANCES[ev.stance].name}</span></p>
   <div class="qline"><span class="qbadge ${QUALITY[e.quality].cls}">${QUALITY[e.quality].name}</span><span class="muted small">合計 ${e.steal ? '−' : e.q}（6以上オープン・3〜5コンテスト・1〜2タフ）</span></div>
   ${verdict}${result}${reb}${hot}
-  <details ${S.hints ? 'open' : ''}><summary class="small" style="cursor:pointer;font-weight:700">なぜこうなった？</summary><ul class="why">${reasons}</ul></details></div>
+  <details ${S.hints ? 'open' : ''}><summary class="small" style="cursor:pointer;font-weight:700">なぜこうなった？</summary><p class="small muted" style="margin:6px 0 0">① まず下の合計でシュートの質が決まり、② その質の袋からチップを引いて成否が決まります。</p><ul class="why">${reasons}</ul>${whyTail(ev)}</details></div>
   <div class="commit"><div class="inner"><button class="btn go block" data-act="next">次へ</button></div></div>`;
 }
 
@@ -1413,6 +1527,8 @@ app.addEventListener('click', ev => {
     case 'var': S.team.variants[id] = v; save(); render(); break;
     case 'deck': { const d = S.team.deck; if (d.includes(id)) S.team.deck = d.filter(x => x !== id); else if (d.length < 5) d.push(id); save(); render(); break; }
     case 'opp': S.oppId = id; save(); render(); break;
+    case 'atype': S.autoType = v; save(); render(); break;
+    case 'draft': { const b = t; b.disabled = true; b.textContent = '編成中…'; setTimeout(() => { S.autoTeam = autoDraft(S.autoType === 'random' || !S.autoType ? null : S.autoType, S.team.roster); S.oppId = 'auto'; save(); render(); const el = document.querySelector('.autocard'); if (el) el.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }, 30); break; }
     case 'diff': S.diff = v; save(); render(); break;
     case 'hints': S.hints = v === '1'; save(); render(); break;
     case 'start': startMatch(); break;
