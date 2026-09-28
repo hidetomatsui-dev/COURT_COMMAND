@@ -292,6 +292,14 @@ details.gl dt{font-weight:700;margin-top:10px;color:var(--me)}
 details.gl dd{margin:2px 0 0;font-size:.9rem;line-height:1.6}
 .glbtn{display:block;width:100%;margin-top:10px;border:1.5px dashed var(--line);background:none;border-radius:12px;padding:10px;font-size:.9rem;font-weight:700;color:var(--ink2)}
 .linkbtn{border:none;background:none;padding:0;color:var(--me);font-weight:700;text-decoration:underline;font-size:inherit}
+.ein{width:100%;font:inherit;font-size:1rem;padding:9px 11px;border-radius:10px;border:1.5px solid var(--line);background:var(--bg);color:var(--ink);min-height:44px}
+.ein:focus{outline:3px solid var(--amber);outline-offset:1px}
+.elab{display:block;margin-top:10px}
+.erow{display:grid;grid-template-columns:auto 1fr 64px;gap:8px;align-items:center;margin-top:8px}
+.cdot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:middle}
+#toast{position:fixed;left:50%;bottom:calc(90px + env(safe-area-inset-bottom,0px));transform:translate(-50%,20px);background:var(--ink);color:var(--bg);padding:10px 18px;border-radius:999px;font-weight:700;font-size:.9rem;opacity:0;pointer-events:none;transition:.25s;z-index:60}
+#toast.show{opacity:1;transform:translate(-50%,0)}
+.erow .own{width:34px;text-align:center}
 
 </style>
 </head>
@@ -779,6 +787,19 @@ function turnOrder(m) { return [other(m.last), m.last]; }
 
 /* ===== UI ===== */
 const SAVE_KEY = 'courtcommand_v1';
+const ORIG = {
+  players: Object.fromEntries(PLAYERS.map(p => [p.id, { name: p.name, num: p.num }])),
+  clubs: Object.fromEntries(Object.entries(CLUBS).map(([k, c]) => [k, c.name])),
+  cpu: Object.fromEntries(CPU_TEAMS.map(t => [t.id, t.name]))
+};
+function cleanText(v, max) { return String(v == null ? '' : v).replace(/[<>&"'`]/g, '').replace(/\s+/g, ' ').trim().slice(0, max); }
+function applyCustom() {
+  const cu = S.custom || {};
+  PLAYERS.forEach(p => { const o = (cu.players || {})[p.id] || {}; p.name = o.name || ORIG.players[p.id].name; p.num = o.num != null && o.num !== '' ? o.num : ORIG.players[p.id].num; });
+  Object.keys(CLUBS).forEach(k => { CLUBS[k].name = (cu.clubs || {})[k] || ORIG.clubs[k]; });
+  CPU_TEAMS.forEach(t => { t.name = (cu.cpu || {})[t.id] || ORIG.cpu[t.id]; });
+}
+function myName() { return (S.custom && S.custom.my) || 'あなた'; }
 const DEFAULT_SAVE = {
   owned: { 'a1:base': 1, 'a2:base': 1, 'a3:base': 1, 'a4:base': 1, 'b2:base': 1, 'e3:base': 1, 'c4:base': 1, 'd4:base': 1 },
   packs: 2, lastFree: '', rec: { w: 0, l: 0, d: 0 },
@@ -790,7 +811,7 @@ function load() {
   try { const raw = localStorage.getItem(SAVE_KEY); S = raw ? { ...structuredClone(DEFAULT_SAVE), ...JSON.parse(raw) } : structuredClone(DEFAULT_SAVE); }
   catch (e) { S = structuredClone(DEFAULT_SAVE); }
 }
-function save() { try { localStorage.setItem(SAVE_KEY, JSON.stringify(S)); } catch (e) { } }
+function save() { applyCustom(); try { localStorage.setItem(SAVE_KEY, JSON.stringify(S)); } catch (e) { } }
 function today() { const d = new Date(); return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`; }
 function owns(id, v) { return (S.owned[`${id}:${v || 'base'}`] || 0) > 0; }
 function ownsAny(id) { return owns(id, 'base') || owns(id, 'moment'); }
@@ -842,6 +863,7 @@ SCREENS.home = () => {
     <button class="btn ghost block" data-go="howto"><span>あそびかた</span></button>
     <button class="btn ghost block" data-go="glossary"><span>用語集</span></button>
     <button class="btn ghost block" data-go="about"><span>このプロトタイプについて</span></button>
+    <button class="btn ghost block" data-go="edit"><span>名前の編集（評価用）</span></button>
   </div>
   <div class="panel"><div class="row"><span class="muted small">通算成績</span></div><div class="record"><span><b>${S.rec.w}</b> 勝</span><span><b>${S.rec.l}</b> 敗</span><span><b>${S.rec.d}</b> 分</span></div></div>
   </div>`;
@@ -940,7 +962,7 @@ SCREENS.opp = () => {
 function startMatch() {
   const t = CPU_TEAMS.find(x => x.id === S.oppId) || CPU_TEAMS[0];
   const variants = {}; S.team.roster.forEach(id => { if (S.team.variants[id] === 'moment' && owns(id, 'moment')) variants[id] = 'moment'; });
-  const P = makeTeam('P', 'あなた', 'var(--me)', S.team.roster, variants, S.team.deck, 'balance');
+  const P = makeTeam('P', myName(), 'var(--me)', S.team.roster, variants, S.team.deck, 'balance');
   const C = makeTeam('C', t.name, t.color, t.roster, {}, t.deck, t.personality);
   M = newMatch(P, C, S.diff);
   M.oppTeam = t;
@@ -998,7 +1020,7 @@ function scoreboard() {
     dots.push(`<i class="${c}"></i>`);
   }
   return `<div class="board"><div class="score" role="status" aria-label="あなた ${M.P.score} 対 ${M.C.score}">
-    <div><div class="tm">あなた${M.last === 'P' ? '・最後の攻撃権' : ''}</div><div class="pts">${M.P.score}</div></div>
+    <div><div class="tm">${M.P.name}${M.last === 'P' ? '・最後の攻撃権' : ''}</div><div class="pts">${M.P.score}</div></div>
     <div class="mid"><div class="t">${turnLabel()}</div><div class="ot">${M.turn >= 6 ? 'クラッチ' : 'ターン'}</div></div>
     <div class="r"><div class="tm">${M.C.name}${M.last === 'C' ? '・最後の攻撃権' : ''}</div><div class="pts">${M.C.score}</div></div></div>
     <div class="mom"><span>${M.P.hot ? '<span class="hot">あなた 流れ</span>' : 'あなた'}</span><span class="dots" role="img" aria-label="流れゲージ">${dots.join('')}</span><span>${M.C.hot ? '<span class="hot">相手 流れ</span>' : '相手'}</span></div></div>`;
@@ -1204,7 +1226,7 @@ SCREENS.result = () => {
   const mvp = all.sort((x, y) => y.p.pts - x.p.pts)[0];
   const openP = evs.filter(e => e.side === 'P' && e.e.quality === 'OPEN').length;
   const reads = evs.filter(e => e.side === 'C' && (e.e.steal || e.e.q < e.balQ)).length;
-  return `<div class="wrap"><div class="final"><div class="wl" style="color:${w ? 'var(--me)' : d ? 'var(--ink2)' : 'var(--cpu)'}">${w ? '勝利' : d ? '引き分け' : '敗戦'}</div><div class="sc">${M.P.score} - ${M.C.score}</div><p class="muted">${M.C.name}${M.ot ? `・延長${M.ot}` : ''}</p></div>
+  return `<div class="wrap"><div class="final"><div class="wl" style="color:${w ? 'var(--me)' : d ? 'var(--ink2)' : 'var(--cpu)'}">${w ? '勝利' : d ? '引き分け' : '敗戦'}</div><div class="sc">${M.P.score} - ${M.C.score}</div><p class="muted">${M.P.name} 対 ${M.C.name}${M.ot ? `・延長${M.ot}` : ''}</p></div>
   ${w ? `<div class="callout">勝利ボーナス：パックを1つ獲得しました</div>` : ''}
   <div class="panel"><h3>試合のポイント</h3>
   <p class="small">MVP：<b>${mvp.p.name}</b>（${mvp.side}・${mvp.p.pts}点）</p>
@@ -1215,6 +1237,45 @@ SCREENS.result = () => {
   <div class="menu"><button class="btn go block" data-act="rematch">もう一度</button>${S.packs ? `<button class="btn primary block" data-act="openpackscreen">パックを開ける</button>` : ''}<button class="btn block" data-go="team">チームを変える</button><button class="btn ghost block" data-go="home">ホームへ</button></div></div>`;
 };
 
+
+
+/* ---------- editor (evaluation) ---------- */
+SCREENS.edit = () => {
+  const cu = S.custom || {};
+  const inp = (key, val, ph, max, type) => `<input class="ein" data-k="${key}" value="${val == null ? '' : val}" placeholder="${ph}" maxlength="${max}" ${type === 'num' ? 'inputmode="numeric" pattern="[0-9]*"' : ''} aria-label="${ph}">`;
+  return `<div class="wrap">${topBar('名前の編集（評価用）')}
+  <p class="muted small">チーム名・クラブ名・選手名・背番号を自由に変えられます。空欄にすると元の名前に戻ります。能力値や年俸は変わりません。変更はこの端末のブラウザにだけ保存されます。</p>
+  <div class="panel"><h3>自分のチーム名</h3>${inp('my', cu.my || '', 'あなた', 20)}</div>
+  <div class="panel"><h3>対戦相手（CPU）のチーム名</h3>${CPU_TEAMS.map(t => `<label class="elab"><span class="small muted">元：${ORIG.cpu[t.id]}</span>${inp('cpu.' + t.id, (cu.cpu || {})[t.id] || '', ORIG.cpu[t.id], 24)}</label>`).join('')}</div>
+  <div class="panel"><h3>クラブ名</h3>${Object.keys(CLUBS).map(k => `<label class="elab"><span class="small muted"><i class="cdot" style="background:${CLUBS[k].color}"></i>元：${ORIG.clubs[k]}</span>${inp('club.' + k, (cu.clubs || {})[k] || '', ORIG.clubs[k], 20)}</label>`).join('')}</div>
+  <div class="panel"><h3>選手名と背番号</h3>${Object.keys(CLUBS).map(k => `<p class="small" style="margin-top:12px"><b><i class="cdot" style="background:${CLUBS[k].color}"></i>${CLUBS[k].name}</b></p>${PLAYERS.filter(p => p.club === k).map(p => { const o = (cu.players || {})[p.id] || {}; return `<div class="erow"><span class="own">${p.pos}</span>${inp('pn.' + p.id, o.name || '', ORIG.players[p.id].name, 20)}${inp('pnum.' + p.id, o.num != null ? o.num : '', String(ORIG.players[p.id].num), 2, 'num')}</div>`; }).join('')}`).join('')}</div>
+  <div class="panel"><h3>設定の書き出し・読み込み</h3><p class="small muted">別の端末に同じ名前を持っていくときに使います。下の文字をコピーして、別の端末の同じ欄に貼り付けて「読み込む」を押してください。</p>
+  <textarea id="cjson" rows="5" style="width:100%;font-size:.8rem;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--ink);padding:8px" aria-label="設定の文字列">${JSON.stringify(cu)}</textarea>
+  <div class="row" style="margin-top:8px"><button class="btn" data-act="cimport">読み込む</button><button class="btn ghost" data-act="ccopy">コピー</button></div></div>
+  <div class="menu"><button class="btn ghost block" data-act="creset">すべて元の名前に戻す</button></div>
+  <div class="commit"><div class="inner"><button class="btn go block" data-act="csave">保存する</button></div></div></div>`;
+};
+function collectCustom() {
+  const cu = { players: {}, clubs: {}, cpu: {} };
+  document.querySelectorAll('.ein').forEach(el => {
+    const k = el.dataset.k;
+    if (k === 'my') { const v = cleanText(el.value, 20); if (v) cu.my = v; }
+    else if (k.startsWith('cpu.')) { const v = cleanText(el.value, 24); if (v) cu.cpu[k.slice(4)] = v; }
+    else if (k.startsWith('club.')) { const v = cleanText(el.value, 20); if (v) cu.clubs[k.slice(5)] = v; }
+    else if (k.startsWith('pn.')) { const v = cleanText(el.value, 20); if (v) (cu.players[k.slice(3)] = cu.players[k.slice(3)] || {}).name = v; }
+    else if (k.startsWith('pnum.')) { const v = String(el.value).replace(/[^0-9]/g, '').slice(0, 2); if (v !== '') (cu.players[k.slice(5)] = cu.players[k.slice(5)] || {}).num = +v; }
+  });
+  return cu;
+}
+function sanitizeCustom(raw) {
+  const cu = { players: {}, clubs: {}, cpu: {} };
+  if (!raw || typeof raw !== 'object') return cu;
+  if (raw.my) cu.my = cleanText(raw.my, 20);
+  Object.keys(raw.cpu || {}).forEach(k => { if (ORIG.cpu[k]) cu.cpu[k] = cleanText(raw.cpu[k], 24); });
+  Object.keys(raw.clubs || {}).forEach(k => { if (ORIG.clubs[k]) cu.clubs[k] = cleanText(raw.clubs[k], 20); });
+  Object.keys(raw.players || {}).forEach(k => { if (!ORIG.players[k]) return; const o = raw.players[k] || {}; const r = {}; if (o.name) r.name = cleanText(o.name, 20); if (o.num !== undefined && o.num !== '' && !isNaN(+o.num)) r.num = Math.max(0, Math.min(99, Math.floor(+o.num))); cu.players[k] = r; });
+  return cu;
+}
 
 /* ---------- glossary ---------- */
 const GLOSSARY = [
@@ -1334,6 +1395,10 @@ app.addEventListener('click', ev => {
   const a = t.dataset.act, id = t.dataset.id, v = t.dataset.v;
   switch (a) {
     case 'closemodal': modal = null; render(); break;
+    case 'csave': S.custom = collectCustom(); save(); toast('保存しました'); render(); break;
+    case 'creset': if (confirm('チーム名・選手名をすべて元に戻しますか？')) { S.custom = {}; save(); render(); } break;
+    case 'cimport': { try { S.custom = sanitizeCustom(JSON.parse(document.getElementById('cjson').value || '{}')); save(); toast('読み込みました'); render(); } catch (e) { alert('読み込めませんでした。文字列が正しいか確認してください。'); } break; }
+    case 'ccopy': { const ta = document.getElementById('cjson'); ta.select(); try { navigator.clipboard.writeText(ta.value).then(() => toast('コピーしました'), () => toast('文字を選択しました。長押しでコピーしてください')); } catch (e) { toast('文字を選択しました。長押しでコピーしてください'); } break; }
     case 'gloss': modal = { html: `<h2 style="margin-bottom:8px">用語集</h2>${glossaryHtml(false)}` }; render(); break;
     case 'detail': modal = { html: detailHtml(id, v) }; render(); break;
     case 'cf': UI.cf = v; render(); break;
@@ -1368,7 +1433,8 @@ app.addEventListener('click', ev => {
 });
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && modal) { modal = null; render(); } });
 
-load(); render();
+function toast(msg) { let t = document.getElementById('toast'); if (!t) { t = document.createElement('div'); t.id = 'toast'; t.setAttribute('role', 'status'); document.body.appendChild(t); } t.textContent = msg; t.classList.add('show'); clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove('show'), 1800); }
+load(); applyCustom(); render();
 
 })();
 </script>
