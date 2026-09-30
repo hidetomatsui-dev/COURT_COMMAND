@@ -306,6 +306,12 @@ details.gl dd{margin:2px 0 0;font-size:.9rem;line-height:1.6}
 .wt-row{display:grid;grid-template-columns:auto auto 1fr;gap:8px;align-items:baseline;font-size:.86rem;padding:3px 0}
 .wt-row > span:first-child{color:var(--ink2);white-space:nowrap}
 .wt-row > b{font-family:var(--display);font-weight:900;min-width:2.6em;text-align:right}
+.coachbtn{margin-left:auto;border:1.5px solid var(--me);color:var(--me);background:none;border-radius:999px;padding:3px 12px;font-size:.8rem;font-weight:700}
+.coachbtn.def{border-color:var(--cpu);color:var(--cpu)}
+.coachnote{font-size:.84rem;line-height:1.5;background:color-mix(in srgb,var(--me) 10%,var(--surface));border-radius:10px;padding:8px 10px;margin:-2px 0 8px}
+.coachnote.def{background:color-mix(in srgb,var(--cpu) 9%,var(--surface))}
+.substep .sp{flex:1}
+.ver{text-align:center;font-size:.72rem;color:var(--ink2);margin:18px 0 0;letter-spacing:.04em}
 
 </style>
 </head>
@@ -868,6 +874,8 @@ function autoDraft(type, excludeIds) {
 }
 
 /* ===== UI ===== */
+const APP_VERSION = '0.9.0';
+const APP_BUILD = '2026-09-30';
 const SAVE_KEY = 'courtcommand_v1';
 const ORIG = {
   players: Object.fromEntries(PLAYERS.map(p => [p.id, { name: p.name, num: p.num }])),
@@ -948,6 +956,7 @@ SCREENS.home = () => {
     <button class="btn ghost block" data-go="edit"><span>名前の編集（評価用）</span></button>
   </div>
   <div class="panel"><div class="row"><span class="muted small">通算成績</span></div><div class="record"><span><b>${S.rec.w}</b> 勝</span><span><b>${S.rec.l}</b> 敗</span><span><b>${S.rec.d}</b> 分</span></div></div>
+  <p class="ver">COURT COMMAND ver. ${APP_VERSION}（${APP_BUILD}）</p>
   </div>`;
 };
 
@@ -1149,6 +1158,27 @@ function previewRow(att, def, plan) {
   return `<div class="preview">${STANCE_IDS.map(s => { const e = evalAttack({ att, def, ...plan, stance: s, turn: M.turn, defCardId: null }); return `<div class="pv"><span class="muted">相手が${STANCES[s].short}</span><b class="${QUALITY[e.quality].cls}">${e.quality === 'TO' ? 'ミス' : QUALITY[e.quality].name}</b>${e.quality === 'TO' ? 'TO' : SHOT_NAME[e.shot]}</div>`; }).join('')}</div>`;
 }
 
+function coachAttack() {
+  let best = null;
+  combos(M.P, M.turn, M.ot > 0).forEach(cb => {
+    let mn = 9, avg = 0, worstQ = 'OPEN';
+    const rank = { TO: 0, TOUGH: 1, CONTESTED: 2, OPEN: 3 };
+    STANCE_IDS.forEach(st => { const e = evalAttack({ att: M.P, def: M.C, ...cb, stance: st, turn: M.turn, defCardId: null }); const v = evOf(M.P, e); mn = Math.min(mn, v); avg += v / 4; if (rank[e.quality] < rank[worstQ]) worstQ = e.quality; });
+    const sc = mn * 0.6 + avg * 0.4;
+    if (!best || sc > best.sc) best = { cb, sc, worstQ };
+  });
+  return best;
+}
+function coachStance(myCard) {
+  let best = null;
+  STANCE_IDS.forEach(st => {
+    const r = bestReply(M.C, M.P, st, M.turn, M.ot > 0, myCard);
+    let v = r ? r.ev : 0;
+    if (st === 'press') { const avg = M.P.players.reduce((a, p) => a + p.st, 0) / 5; if (avg < 55) v += 0.4; }
+    if (!best || v < best.v) best = { st, v, r };
+  });
+  return best;
+}
 function planComplete() {
   const s = UI.sel; if (!s.cardId || s.h == null) return false;
   if (CARDS[s.cardId].o && s.o == null) return false;
@@ -1164,7 +1194,7 @@ function planView() {
   if (late) out += `<div class="callout">あなたが最後の攻撃権を持っています。先に守備だけ決めて、相手の攻撃の結果を見てから攻め方を選べます。</div>`;
   if (M.phase === 'plan-late') out += `<div class="callout">いよいよ最後の攻撃。スコアは ${M.P.score} 対 ${M.C.score}。</div>`;
   if (attackStep) {
-    let a = `<div class="substep"><span class="sn">1</span>作戦をえらぶ</div>${handHtml(M.P, s.cardId)}`;
+    let a = `<div class="substep"><span class="sn">1</span>作戦をえらぶ<span class="sp"></span><button class="coachbtn" data-act="coachA">コーチのおすすめ</button></div>${UI.coachA ? `<div class="coachnote">${UI.coachA}</div>` : ''}${handHtml(M.P, s.cardId)}`;
     if (C) {
       a += `<p class="small" style="margin:2px 0 0">${C.desc}</p>`;
       a += `<div class="substep"><span class="sn">2</span>${C.h}</div>${chipsHtml(M.P, 'h', s.h)}`;
@@ -1174,7 +1204,7 @@ function planView() {
     out += `<section class="phase atk" aria-label="攻め"><div class="phase-h"><span class="pill">攻め</span><h3>あなたの攻撃をどう組み立てる？</h3></div>${a}</section>`;
   }
   if (defStep) {
-    out += `<section class="phase def" aria-label="守り"><div class="phase-h"><span class="pill">守り</span><h3>相手の攻撃にどう備える？</h3></div><div class="substep"><span class="sn">1</span>守りの方針をえらぶ</div><div class="stances" role="group" aria-label="守備スタンス">${STANCE_IDS.map(st => {
+    out += `<section class="phase def" aria-label="守り"><div class="phase-h"><span class="pill">守り</span><h3>相手の攻撃にどう備える？</h3></div><div class="substep"><span class="sn">1</span>守りの方針をえらぶ<span class="sp"></span><button class="coachbtn def" data-act="coachD">コーチのおすすめ</button></div>${UI.coachD ? `<div class="coachnote def">${UI.coachD}</div>` : ''}<div class="stances" role="group" aria-label="守備スタンス">${STANCE_IDS.map(st => {
       let rep = '';
       if (S.hints) { const b = bestReply(M.C, M.P, st, M.turn, M.ot > 0, attackStep ? s.cardId : null); if (b) rep = `<span class="rep">相手の最善手：${CARDS[b.cardId].name}→<b class="${QUALITY[b.e.quality].cls}">${QUALITY[b.e.quality].name}</b></span>`; }
       return `<button class="stance" data-act="stance" data-v="${st}" aria-pressed="${s.stance === st}"><b>${STANCES[st].name}</b><span>${STANCES[st].desc}</span>${rep}</button>`;
@@ -1537,7 +1567,9 @@ app.addEventListener('click', ev => {
     case 'h': UI.sel.h = +t.dataset.i; if (UI.sel.o === UI.sel.h) UI.sel.o = null; render(); break;
     case 'o': UI.sel.o = +t.dataset.i; render(); break;
     case 'stance': UI.sel.stance = v; render(); break;
-    case 'commit': commit(); break;
+    case 'commit': UI.coachA = UI.coachD = null; commit(); break;
+    case 'coachA': { const b = coachAttack(); if (b) { UI.sel.cardId = b.cb.cardId; UI.sel.h = b.cb.h; UI.sel.o = b.cb.o; const C = CARDS[b.cb.cardId]; const hp = M.P.players[b.cb.h]; UI.coachA = `<b>${C.name}</b>（${surname(hp)}${b.cb.o != null ? '→' + surname(M.P.players[b.cb.o]) : ''}）。相手がどの守備を選んでも<b>${QUALITY[b.worstQ].name}</b>以上になる、読み負けに強い手です。`; } render(); break; }
+    case 'coachD': { const b = coachStance(playerLate() && M.phase === 'plan' ? null : UI.sel.cardId); UI.sel.stance = b.st; UI.coachD = `<b>${STANCES[b.st].name}</b>。相手がいちばん得意な攻め（${b.r ? CARDS[b.r.cardId].name : '—'}）でも、ほかの守り方より点を取られにくくなります。`; render(); break; }
     case 'timeout': M.P.timeout = 0; M.P.players.forEach(p => (p.st = Math.min(100, p.st + 20))); M.phase = 'timeout'; render(); break;
     case 'th': M.plan.P.h = +t.dataset.i; if (M.plan.P.o === M.plan.P.h) { M.plan.P.o = M.P.players.findIndex((_, i) => i !== M.plan.P.h); } render(); break;
     case 'to': M.plan.P.o = +t.dataset.i; render(); break;
