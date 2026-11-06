@@ -62,11 +62,11 @@ p{margin:.4em 0}
 .title .yomi{display:block;margin-top:12px;font-size:max(1rem,.3em);font-weight:700;letter-spacing:.12em;color:var(--amber);line-height:1.4}
 .title .yomi .sub{display:block;font-size:.8rem;letter-spacing:.04em;color:var(--ink2);font-weight:400;margin-top:2px}
 .tagline{font-size:1.05rem;margin-top:12px;max-width:26em}
-.fan{position:relative;height:210px;margin:18px 0 6px}
-.fan .pcard{position:absolute;top:0;width:140px;transform-origin:50% 120%}
-.fan .pcard:nth-child(1){left:calc(50% - 170px);transform:rotate(-12deg)}
-.fan .pcard:nth-child(2){left:calc(50% - 70px);transform:translateY(-8px);z-index:2}
-.fan .pcard:nth-child(3){left:calc(50% + 30px);transform:rotate(12deg)}
+.fan{display:flex;justify-content:center;align-items:flex-start;margin:6px -16px 0;padding:18px 0 22px;overflow:hidden}
+.fan .pcard{position:relative;flex:none;width:min(140px,28vw);transform-origin:50% 120%}
+.fan .pcard:nth-child(1){transform:translateX(8%) rotate(-10deg)}
+.fan .pcard:nth-child(2){transform:translateY(-8px);z-index:2}
+.fan .pcard:nth-child(3){transform:translateX(-8%) rotate(10deg)}
 .menu{display:grid;gap:10px;margin-top:10px}
 .menu .btn{justify-content:space-between;padding:14px 18px}
 .menu .btn .n{font-family:var(--display);font-weight:900;font-variant-numeric:tabular-nums;font-size:1.1rem}
@@ -312,6 +312,14 @@ details.gl dd{margin:2px 0 0;font-size:.9rem;line-height:1.6}
 .coachnote.def{background:color-mix(in srgb,var(--cpu) 9%,var(--surface))}
 .substep .sp{flex:1}
 .ver{text-align:center;font-size:.72rem;color:var(--ink2);margin:18px 0 0;letter-spacing:.04em}
+.chip .shotlab{display:block;font-style:normal;font-size:.68rem;font-weight:700;color:var(--amber);line-height:1.1}
+@supports not (background: color-mix(in srgb, red, blue)) {
+  .tcard[aria-pressed="true"],.chip[aria-pressed="true"],.prow.sel,.phase .tcard[aria-pressed="true"],.phase .chip[aria-pressed="true"]{background:var(--surface2)}
+  .stance[aria-pressed="true"],.phase .stance[aria-pressed="true"]{background:var(--surface2)}
+  .tag.off,.tag.def,.own.yes,.coachnote,.coachnote.def,.verdict.ok{background:var(--surface2)}
+  .pcard .pc-art{background:var(--club)}
+  .pcard.moment{border:2px solid #FFD35C;background:var(--surface)}
+}
 
 </style>
 </head>
@@ -389,17 +397,16 @@ const PLAYERS = [
 const PMAP = Object.fromEntries(PLAYERS.map(p => [p.id, p]));
 
 const CARDS = {
-  pnr: { name: 'ピック&ロール', type: 'ACTION', uses: 3, cd: 1, h: 'ボールを運ぶ選手', o: 'スクリーンをかける選手', stat: 'PAS', desc: 'スクリーナーがローラーならゴール下へ、スペーサーなら外で3P（ポップ）。', screen: true },
-  dk: { name: 'ドライブ&キック', type: 'ACTION', uses: 3, cd: 1, h: 'ドライブする選手', o: 'パスを受けて3Pを打つ選手', stat: 'FIN', desc: '切り込んで守備を集め、外のシューターへ。', onball: true },
-  iso: { name: 'アイソレーション', type: 'ACTION', uses: 2, cd: 1, h: '1対1をする選手', o: null, stat: 'ISO', desc: 'エースに任せる。ミドルシュートで勝負。', onball: true },
-  post: { name: 'ポストアップ', type: 'ACTION', uses: 2, cd: 1, h: 'ゴール下で受ける選手', o: null, stat: 'FIN', desc: 'ゴール下で体を張って押し込む。', onball: true },
-  cs: { name: 'キャッチ&シュート', type: 'ACTION', uses: 2, cd: 1, h: 'シューター', o: 'パスを出す選手', stat: 'SHT', desc: 'パスを受けてすぐに3P。チームの連動が大事。' },
-  back: { name: 'バックドアカット', type: 'ACTION', uses: 1, cd: 1, h: '裏へ走る選手', o: 'パスを出す選手', stat: 'FIN', desc: '外を守る相手の裏をつく。外郭警戒・プレスに強い。' },
-  ho: { name: 'ハンドオフ', type: 'ACTION', uses: 2, cd: 1, h: 'ボールを受け取る選手', o: '手渡しする選手', stat: 'SHT', desc: '手渡しで壁を作り、シューターを走らせる。', screen: true },
-  q3: { name: 'クイック3', type: 'ACTION', uses: 1, cd: 1, h: 'シューター', o: null, stat: 'SHT', desc: '守備が整う前に撃つ。相手の守備方針の影響を受けない。' },
-  fiveout: { name: '5アウト', type: 'SET', uses: 2, cd: 2, h: 'ドライブする選手', o: null, stat: 'FIN', desc: '全員が外へ広がってドライブ。次のターンも広いスペースが残る。ただし自分の守備は戻りが遅れる。', onball: true },
-  horns: { name: 'ホーンズ', type: 'SET', uses: 2, cd: 2, h: '起点の選手', o: 'エルボーで受ける選手', stat: 'PAS', desc: '2人の長身選手を高い位置に置く。次のターンのP&R・ハンドオフが強くなる。', screen: true },
-  free: { name: 'フリーオフェンス', type: 'BASIC', uses: 99, cd: 0, h: '起点の選手', o: null, stat: 'ISO', desc: 'いつでも使える基本攻撃。少し弱い。' }
+  pnr: { name: 'ピック&ロール', type: 'ACTION', h: 'ボールを運ぶ選手', o: 'スクリーンをかける選手', stat: 'PAS', desc: 'スクリーナーがローラーならゴール下へ、スペーサーなら外で3P（ポップ）。', screen: true },
+  dk: { name: 'ドライブ&キック', type: 'ACTION', h: 'ドライブする選手', o: 'パスを受けて3Pを打つ選手', stat: 'FIN', desc: '切り込んで守備を集め、外のシューターへ。', onball: true },
+  iso: { name: 'アイソレーション', type: 'ACTION', h: '1対1をする選手', o: null, stat: 'ISO', desc: 'エースに任せる。ミドルシュートで勝負。', onball: true },
+  post: { name: 'ポストアップ', type: 'ACTION', h: 'ゴール下で受ける選手', o: null, stat: 'FIN', desc: 'ゴール下で体を張って押し込む。', onball: true },
+  cs: { name: 'キャッチ&シュート', type: 'ACTION', h: 'シューター', o: 'パスを出す選手', stat: 'SHT', desc: 'パスを受けてすぐに3P。チームの連動が大事。' },
+  back: { name: 'バックドアカット', type: 'ACTION', h: '裏へ走る選手', o: 'パスを出す選手', stat: 'FIN', desc: '外を守る相手の裏をつく。外郭警戒・プレスに強い。' },
+  ho: { name: 'ハンドオフ', type: 'ACTION', h: 'ボールを受け取る選手', o: '手渡しする選手', stat: 'SHT', desc: '手渡しで壁を作り、シューターを走らせる。', screen: true },
+  q3: { name: 'クイック3', type: 'ACTION', h: 'シューター', o: null, stat: 'SHT', desc: '守備が整う前に撃つ。相手の守備方針の影響を受けない。' },
+  fiveout: { name: '5アウト', type: 'SET', h: 'ドライブする選手', o: null, stat: 'FIN', desc: '全員が外へ広がってドライブ。次のターンも広いスペースが残る。ただし自分の守備は戻りが遅れる。', onball: true },
+  horns: { name: 'ホーンズ', type: 'SET', h: '起点の選手', o: 'エルボーで受ける選手', stat: 'PAS', desc: '2人の長身選手を高い位置に置く。次のターンのP&R・ハンドオフが強くなる。', screen: true },
 };
 const DECK_CARDS = ['pnr', 'dk', 'iso', 'post', 'cs', 'back', 'ho', 'q3', 'fiveout', 'horns'];
 
@@ -463,7 +470,7 @@ function makeTeam(side, name, color, rosterIds, variants, deckIds, personality) 
     const p = PMAP[id];
     return { ...p, trait: variants && variants[id] === 'moment' ? p.moment : p.trait, st: 100, pts: 0 };
   });
-  const deck = deckIds.map(id => ({ id, read: 0, used: 0 }));
+  const deck = deckIds.map(id => ({ id, read: 0 }));
   return {
     side, name, color, players, deck, personality: personality || 'balance',
     shape: teamShape(players),
@@ -476,10 +483,9 @@ function makeTeam(side, name, color, rosterIds, variants, deckIds, personality) 
 function eff(p, k) { return Math.max(1, p.s[k] - (p.st < 40 ? 1 : 0)); }
 /* 読まれ度: 使うと+2、使わなかったターンの終わりに-1。攻撃の質から読まれ度ぶん引かれる */
 const READ_GAIN = 2, READ_MAX = 6;
-function cardAvailable() { return true; }
 
 /* Core evaluation: returns q, quality, shot type, shooter, reasons.
-   ctx: {att, def, cardId, h, o, stance, turn, defCardId} */
+   ctx: {att, def, cardId, h, o, stance, turn, defLag} */
 function evalAttack(ctx) {
   const { att, def, cardId, h, o, stance, turn } = ctx;
   const C = CARDS[cardId];
@@ -509,7 +515,6 @@ function evalAttack(ctx) {
   const statLabel = C.stat === 'ISO' ? (hp.s.FIN >= hp.s.SHT ? 'FIN' : 'SHT') : C.stat;
   q += base; R.push({ v: base, t: `${hn}の${STAT_NAMES[statLabel]}（${GL[hp.s[statLabel]]}）`, base: true });
   if (hp.st < 40) R.push({ v: -1, t: `${hn}が疲れている`, info: true });
-  if (cardId === 'free') q += add(-1, '決まった形がない');
 
   // card-specific
   if (cardId === 'pnr') {
@@ -585,8 +590,10 @@ function evalAttack(ctx) {
     if (stance === 'press') {
       const pressure = 1 + 2 * locks + (dTrait('pest') ? 2 : 0);
       const handling = eff(hp, 'PAS') + (att.players.some(p => p.off.includes('Connector')) ? 1 : 0);
-      if (pressure > handling + 1) { steal = true; R.push({ v: -9, t: `プレスでボールを奪われた（圧力${pressure} > ボール保持${handling + 1}）` }); }
-      else q += add(1, `プレスをかわして守備が崩れた（圧力${pressure} ≤ ${handling + 1}）`);
+      const gap = pressure - handling;
+      if (gap >= 3) { steal = true; R.push({ v: -9, t: `プレスでボールを奪われた（圧力${pressure} − ボール保持${handling} = ${gap}、3以上で奪われる）` }); }
+      else if (gap >= 1) q += add(-2, `プレスに追い込まれた（圧力${pressure} − ボール保持${handling} = ${gap}）`);
+      else q += add(1, `プレスをかわして守備が崩れた（圧力${pressure} ≤ ボール保持${handling}）`);
     } else if (cardId === 'q3') {
       R.push({ v: 0, t: `${STANCES[stance].name}が整う前に撃った`, info: true });
     } else {
@@ -602,11 +609,20 @@ function evalAttack(ctx) {
       if (anchors) q += add(-Math.min(2, anchors), `相手のアンカー×${anchors}`);
       if (stance === 'inside' && anchors) q += add(-1, 'アンカーが中を固めた');
       if (dTrait('rimguard')) q += add(-1, '相手のリムガード');
-      if (ctx.defCardId === 'fiveout') q += add(1, '相手は5アウト直後で戻りが遅い');
+      if (ctx.defLag) q += add(1, '相手は直前に5アウトで攻めていて戻りが遅い');
     }
     if (shot === 'THREE') {
       if (chasers) q += add(-Math.min(2, chasers), `相手のチェイサー×${chasers}`);
       if (stance === 'outside' && chasers) q += add(-1, 'チェイサーが外を追う');
+    }
+    if (['iso', 'post', 'dk', 'fiveout', 'back'].includes(cardId) && def.players.length) {
+      const grp = p => (p.pos === 'PG' || p.pos === 'SG') ? 0 : p.pos === 'SF' ? 1 : 2;
+      const g = grp(hp);
+      const md = def.players.slice().sort((a, b) => Math.abs(grp(a) - g) - Math.abs(grp(b) - g) || eff(b, 'DEF') - eff(a, 'DEF'))[0];
+      const dv = eff(md, 'DEF');
+      if (dv >= 4) q += add(-1, `マッチアップは${surname(md)}（守備${GL[dv]}）`);
+      else if (dv <= 2) q += add(1, `マッチアップの${surname(md)}は守備が苦手（${GL[dv]}）`);
+      else R.push({ v: 0, t: `マッチアップは${surname(md)}（守備${GL[dv]}）`, info: true });
     }
     if (C.onball && locks) q += add(-1, '相手のロックダウン');
     if (C.screen && sws) q += add(-1, '相手のスイッチ守備');
@@ -619,6 +635,11 @@ function evalAttack(ctx) {
   return { q, quality, shot, shooter, steal, reasons: R };
 }
 
+/* 守備側が「直前の自分の攻撃」で5アウトを使っていたか。攻守は毎ポゼッション交互なので、
+   守備側がこのターン先に攻めるなら今ターンの予定カード、後に攻めるなら前ターンの実績を見る */
+function defLagFor(m, defSide, plannedCard) {
+  return turnOrder(m)[0] === defSide ? plannedCard === 'fiveout' : m[defSide].lastCard === 'fiveout';
+}
 function evOf(team, e) {
   if (e.quality === 'TO') return 0;
   return bagProb(team, e.quality) * (e.shot === 'THREE' ? 3 : 2);
@@ -627,7 +648,6 @@ function evOf(team, e) {
 function combos(team, turn, ot) {
   const out = [];
   team.deck.forEach(c => {
-    if (!cardAvailable(team, c, turn, ot)) return;
     const C = CARDS[c.id];
     for (let h = 0; h < 5; h++) {
       if (C.o) { for (let o = 0; o < 5; o++) if (o !== h) out.push({ cardId: c.id, h, o }); }
@@ -657,8 +677,8 @@ function cpuChooseAttack(m, knownStance) {
   const tot = STANCE_IDS.reduce((a, s) => a + hist[s] + 1, 0);
   const score = cb => {
     let ev = 0;
-    if (knownStance) ev = evOf(cpu, evalAttack({ att: cpu, def: pl, ...cb, stance: knownStance, turn: m.turn, defCardId: m.plan.C && m.plan.C.cardId }));
-    else STANCE_IDS.forEach(s => { ev += ((hist[s] + 1) / tot) * evOf(cpu, evalAttack({ att: cpu, def: pl, ...cb, stance: s, turn: m.turn, defCardId: null })); });
+    if (knownStance) ev = evOf(cpu, evalAttack({ att: cpu, def: pl, ...cb, stance: knownStance, turn: m.turn, defLag: defLagFor(m, 'P', m.plan.P && m.plan.P.cardId) }));
+    else STANCE_IDS.forEach(s => { ev += ((hist[s] + 1) / tot) * evOf(cpu, evalAttack({ att: cpu, def: pl, ...cb, stance: s, turn: m.turn, defLag: defLagFor(m, 'P', m.plan.P && m.plan.P.cardId) })); });
     const C = CARDS[cb.cardId];
     const dc = cpu.deck.find(c => c.id === cb.cardId);
     if (C.type === 'SET' && m.turn < 6) ev += 0.1;
@@ -670,10 +690,10 @@ function cpuChooseAttack(m, knownStance) {
   return softPick(cs, score, m.diff);
 }
 
-function bestReply(att, def, stance, turn, ot, defCardId) {
+function bestReply(att, def, stance, turn, ot, defLag) {
   let best = null;
   combos(att, turn, ot).forEach(cb => {
-    const e = evalAttack({ att, def, ...cb, stance, turn, defCardId });
+    const e = evalAttack({ att, def, ...cb, stance, turn, defLag });
     const ev = evOf(att, e);
     if (!best || ev > best.ev) best = { ...cb, e, ev };
   });
@@ -684,7 +704,7 @@ function cpuChooseStance(m) {
   const cpu = m.C, pl = m.P;
   const score = s => {
     const cs = combos(pl, m.turn, m.ot > 0);
-    const evs = cs.map(cb => evOf(pl, evalAttack({ att: pl, def: cpu, ...cb, stance: s, turn: m.turn, defCardId: null }))).sort((a, b) => b - a);
+    const evs = cs.map(cb => evOf(pl, evalAttack({ att: pl, def: cpu, ...cb, stance: s, turn: m.turn, defLag: defLagFor(m, 'C', m.plan.C && m.plan.C.cardId) }))).sort((a, b) => b - a);
     const top = evs.slice(0, 3);
     let v = 0.6 * top[0] + 0.4 * (top.reduce((a, b) => a + b, 0) / top.length);
     if (s === 'press') { const avg = cpu.players.reduce((a, p) => a + p.st, 0) / 5; if (avg < 55) v += 0.4; }
@@ -698,14 +718,15 @@ function cpuMaybeTimeout(m) {
   const cpu = m.C, pl = m.P, plan = m.plan.C;
   if (!cpu.timeout || !plan) return false;
   const st = m.stance.P;
-  const cur = evalAttack({ att: cpu, def: pl, ...plan, stance: st, turn: m.turn, defCardId: m.plan.P && m.plan.P.cardId });
+  const lag = defLagFor(m, 'P', m.plan.P && m.plan.P.cardId);
+  const cur = evalAttack({ att: cpu, def: pl, ...plan, stance: st, turn: m.turn, defLag: lag });
   let best = null;
-  combos(cpu, m.turn, m.ot > 0).filter(c => c.cardId === plan.cardId).forEach(cb => {
-    const e = evalAttack({ att: cpu, def: pl, ...cb, stance: st, turn: m.turn, defCardId: m.plan.P && m.plan.P.cardId });
-    if (!best || e.q > best.e.q) best = { cb, e };
+  combos(cpu, m.turn, m.ot > 0).forEach(cb => {
+    const e = evalAttack({ att: cpu, def: pl, ...cb, stance: st, turn: m.turn, defLag: lag });
+    if (!best || evOf(cpu, e) > evOf(cpu, best.e)) best = { cb, e };
   });
   const thresh = m.diff === 'easy' ? 99 : m.turn >= 5 ? 2 : 3;
-  if (best && best.e.q - cur.q >= thresh && cur.quality !== best.e.quality) {
+  if (best && evOf(cpu, best.e) - evOf(cpu, cur) >= thresh * 0.4 && cur.quality !== best.e.quality) {
     m.plan.C = best.cb; cpu.timeout = 0;
     cpu.players.forEach(p => (p.st = Math.min(100, p.st + 20)));
     return true;
@@ -719,7 +740,7 @@ function newMatch(pl, cpu, diff) {
   return m;
 }
 function other(s) { return s === 'P' ? 'C' : 'P'; }
-function isLateTurn(m) { return m.turn >= 6; }
+function isLateTurn(m) { return m.turn === 6; }
 
 function drain(p, amt) {
   let mult = 1.4 - 0.12 * p.s.STA;
@@ -737,7 +758,7 @@ function resolvePossession(m, side) {
   const att = m[side], def = m[other(side)];
   const plan = m.plan[side];
   const stance = m.stance[other(side)];
-  const e = evalAttack({ att, def, ...plan, stance, turn: m.turn, defCardId: m.plan[other(side)] ? m.plan[other(side)].cardId : null });
+  const e = evalAttack({ att, def, ...plan, stance, turn: m.turn, defLag: def.lastCard === 'fiveout' });
   const ev = { side, turn: m.turn, plan: { ...plan }, stance, e, hot: att.hot, draw: null, pts: 0, reb: null, put: null };
   att.hot = false;
   let scored = false;
@@ -768,8 +789,9 @@ function resolvePossession(m, side) {
   if (m.mom <= -3) { m.C.hot = true; m.mom = 0; ev.hotGain = 'C'; }
   // card usage
   const dc = att.deck.find(c => c.id === plan.cardId);
-  if (dc) { dc.read = Math.min(READ_MAX, dc.read + READ_GAIN); dc.used++; }
+  if (dc) dc.read = Math.min(READ_MAX, dc.read + READ_GAIN);
   att.usedThisTurn = plan.cardId;
+  att.lastCard = plan.cardId;
   if (CARDS[plan.cardId].type === 'SET') att.activeSet = { id: plan.cardId, turn: m.turn + 1 };
   // stamina
   drain(att.players[plan.h], 10);
@@ -793,6 +815,8 @@ function endTurn(m) {
   if (m.turn >= 6) {
     if (m.ot >= 3) { m.over = true; return; }
     m.ot++;
+    m.last = other(m.last); // 延長に入るたびに最後の攻撃権（後攻）を入れ替える
+    m.P.lastCard = m.C.lastCard = null; // 攻守の順が切り替わるので、5アウトの戻り遅れは持ち越さない
   }
   m.turn++;
 }
@@ -873,8 +897,9 @@ function autoDraft(type, excludeIds) {
   return { id: 'auto', auto: true, type, coach, name: `${coach}HCの${T.team}`, personality: T.personality, color: T.color, desc: T.desc, roster, deck: pickDeck(roster, type) };
 }
 
+
 /* ===== UI ===== */
-const APP_VERSION = '0.9.0';
+const APP_VERSION = '0.10.0';
 const APP_BUILD = '2026-09-30';
 const SAVE_KEY = 'courtcommand_v1';
 const ORIG = {
@@ -885,11 +910,11 @@ const ORIG = {
 function cleanText(v, max) { return String(v == null ? '' : v).replace(/[<>&"'`]/g, '').replace(/\s+/g, ' ').trim().slice(0, max); }
 function applyCustom() {
   const cu = S.custom || {};
-  PLAYERS.forEach(p => { const o = (cu.players || {})[p.id] || {}; p.name = o.name || ORIG.players[p.id].name; p.num = o.num != null && o.num !== '' ? o.num : ORIG.players[p.id].num; });
-  Object.keys(CLUBS).forEach(k => { CLUBS[k].name = (cu.clubs || {})[k] || ORIG.clubs[k]; });
-  CPU_TEAMS.forEach(t => { t.name = (cu.cpu || {})[t.id] || ORIG.cpu[t.id]; });
+  PLAYERS.forEach(p => { const o = (cu.players || {})[p.id] || {}; p.name = cleanText(o.name, 20) || ORIG.players[p.id].name; p.num = o.num != null && o.num !== '' && Number.isFinite(+o.num) ? Math.max(0, Math.min(99, Math.floor(+o.num))) : ORIG.players[p.id].num; });
+  Object.keys(CLUBS).forEach(k => { CLUBS[k].name = cleanText((cu.clubs || {})[k], 20) || ORIG.clubs[k]; });
+  CPU_TEAMS.forEach(t => { t.name = cleanText((cu.cpu || {})[t.id], 24) || ORIG.cpu[t.id]; });
 }
-function myName() { return (S.custom && S.custom.my) || 'あなた'; }
+function myName() { return cleanText(S.custom && S.custom.my, 20) || 'あなた'; }
 const DEFAULT_SAVE = {
   owned: { 'a1:base': 1, 'a2:base': 1, 'a3:base': 1, 'a4:base': 1, 'b2:base': 1, 'e3:base': 1, 'c4:base': 1, 'd4:base': 1 },
   packs: 2, lastFree: '', rec: { w: 0, l: 0, d: 0 },
@@ -897,9 +922,42 @@ const DEFAULT_SAVE = {
   diff: 'normal', hints: true, oppId: 'shoot'
 };
 let S;
+const SAVE_VERSION = 2;
+function clone(o) { return JSON.parse(JSON.stringify(o)); }
+function esc(v) { return String(v == null ? '' : v).replace(/[&<>"'`]/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;', '`': '&#96;' })[ch]); }
+/* セーブデータを項目ごとに検証して、現在の形にそろえる（古い版・壊れたデータ・手で書き換えたデータにも対応） */
+function migrate(raw) {
+  const d = clone(DEFAULT_SAVE);
+  if (!raw || typeof raw !== 'object') return { ...d, v: SAVE_VERSION };
+  const int = (x, def) => (Number.isFinite(+x) && +x >= 0 ? Math.floor(+x) : def);
+  const out = { ...d, v: SAVE_VERSION };
+  out.owned = {};
+  Object.entries(raw.owned || {}).forEach(([k, n]) => { const [id, v] = k.split(':'); if (PMAP[id] && (v === 'base' || v === 'moment') && int(n, 0) > 0) out.owned[k] = int(n, 0); });
+  if (raw.owned === undefined) out.owned = d.owned;
+  out.packs = int(raw.packs, d.packs);
+  out.lastFree = typeof raw.lastFree === 'string' ? raw.lastFree.slice(0, 12) : '';
+  const rec = raw.rec || {}; out.rec = { w: int(rec.w, 0), l: int(rec.l, 0), d: int(rec.d, 0) };
+  const t = raw.team || {};
+  const roster = [...new Set((Array.isArray(t.roster) ? t.roster : []).filter(id => PMAP[id]))].slice(0, 5);
+  const deck = [...new Set((Array.isArray(t.deck) ? t.deck : []).filter(id => DECK_CARDS.includes(id)))].slice(0, 5);
+  const variants = {}; Object.entries(t.variants || {}).forEach(([id, v]) => { if (PMAP[id] && (v === 'base' || v === 'moment')) variants[id] = v; });
+  out.team = { roster: Array.isArray(t.roster) ? roster : d.team.roster, variants, deck: Array.isArray(t.deck) ? deck : d.team.deck };
+  out.diff = ['easy', 'normal', 'hard'].includes(raw.diff) ? raw.diff : d.diff;
+  out.hints = typeof raw.hints === 'boolean' ? raw.hints : d.hints;
+  out.autoType = ['three', 'inside', 'defense', 'balance', 'random'].includes(raw.autoType) ? raw.autoType : 'random';
+  const at = raw.autoTeam;
+  if (at && AUTO_TYPES[at.type] && Array.isArray(at.roster) && at.roster.length === 5 && at.roster.every(id => PMAP[id]) && Array.isArray(at.deck) && at.deck.length === 5 && at.deck.every(id => DECK_CARDS.includes(id))) {
+    const T = AUTO_TYPES[at.type]; const coach = COACHES.includes(at.coach) ? at.coach : COACHES[0];
+    out.autoTeam = { id: 'auto', auto: true, type: at.type, coach, name: `${coach}HCの${T.team}`, personality: T.personality, color: T.color, desc: T.desc, roster: at.roster.slice(), deck: at.deck.slice() };
+  }
+  out.oppId = raw.oppId === 'auto' ? (out.autoTeam ? 'auto' : d.oppId) : (CPU_TEAMS.some(c => c.id === raw.oppId) ? raw.oppId : d.oppId);
+  out.custom = sanitizeCustom(raw.custom);
+  return out;
+}
 function load() {
-  try { const raw = localStorage.getItem(SAVE_KEY); S = raw ? { ...structuredClone(DEFAULT_SAVE), ...JSON.parse(raw) } : structuredClone(DEFAULT_SAVE); }
-  catch (e) { S = structuredClone(DEFAULT_SAVE); }
+  let raw = null;
+  try { const txt = localStorage.getItem(SAVE_KEY); raw = txt ? JSON.parse(txt) : null; } catch (e) { raw = null; }
+  S = raw ? migrate(raw) : { ...clone(DEFAULT_SAVE), v: SAVE_VERSION };
 }
 function save() { applyCustom(); try { localStorage.setItem(SAVE_KEY, JSON.stringify(S)); } catch (e) { } }
 function today() { const d = new Date(); return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`; }
@@ -923,7 +981,7 @@ function tagsHtml(p, trait) {
 function pcard(p, variant, opts = {}) {
   const moment = variant === 'moment';
   const cls = ['pcard', moment ? 'moment' : '', opts.unowned ? 'unowned' : ''].join(' ');
-  return `<div class="${cls}" style="--club:${CLUBS[p.club].color}"><div class="pc-art"><span class="pc-num">${p.num}</span><span class="pc-pos">${p.pos}</span>${avatar(p)}${moment ? '<span class="mtag">モーメント</span>' : ''}</div><div class="pc-body"><div class="pc-name">${p.name}</div><div class="pc-club">${CLUBS[p.club].name}</div>${opts.nosal ? '' : `<span class="pc-sal">年俸 ${p.sal}</span>`}</div>${opts.count > 1 ? `<span class="cnt">×${opts.count}</span>` : ''}</div>`;
+  return `<div class="${cls}" style="--club:${CLUBS[p.club].color}"><div class="pc-art"><span class="pc-num">${p.num}</span><span class="pc-pos">${p.pos}</span>${avatar(p)}${moment ? '<span class="mtag">モーメント</span>' : ''}</div><div class="pc-body"><div class="pc-name">${esc(p.name)}</div><div class="pc-club">${esc(CLUBS[p.club].name)}</div>${opts.nosal ? '' : `<span class="pc-sal">年俸 ${p.sal}</span>`}</div>${opts.count > 1 ? `<span class="cnt">×${opts.count}</span>` : ''}</div>`;
 }
 function miniStats(p) { return `<span class="mstats">${STAT_KEYS.map(k => `<span><small>${STAT_NAMES[k]}</small><b class="g${p.s[k]}">${GL[p.s[k]]}</b></span>`).join('')}</span>`; }
 function starStr(n) { return '★'.repeat(n) + '☆'.repeat(5 - n); }
@@ -1083,8 +1141,8 @@ function startMatch() {
   view = 'match'; render(); window.scrollTo(0, 0);
 }
 
-function playerLate() { return M.turn >= 6 && M.last === 'P'; }
-function cpuLate() { return M.turn >= 6 && M.last === 'C'; }
+function playerLate() { return M.turn === 6 && M.last === 'P'; }
+function cpuLate() { return M.turn === 6 && M.last === 'C'; }
 function turnLabel() { return M.ot ? `延長${M.ot}` : `${M.turn}/6`; }
 
 function courtSvg(team, plan, cardId) {
@@ -1132,9 +1190,9 @@ function scoreboard() {
     dots.push(`<i class="${c}"></i>`);
   }
   return `<div class="board"><div class="score" role="status" aria-label="あなた ${M.P.score} 対 ${M.C.score}">
-    <div><div class="tm">${M.P.name}${M.last === 'P' ? '・最後の攻撃権' : ''}</div><div class="pts">${M.P.score}</div></div>
+    <div><div class="tm">${esc(M.P.name)}${M.last === 'P' ? '・最後の攻撃権' : ''}</div><div class="pts">${M.P.score}</div></div>
     <div class="mid"><div class="t">${turnLabel()}</div><div class="ot">${M.turn >= 6 ? 'クラッチ' : 'ターン'}</div></div>
-    <div class="r"><div class="tm">${M.C.name}${M.last === 'C' ? '・最後の攻撃権' : ''}</div><div class="pts">${M.C.score}</div></div></div>
+    <div class="r"><div class="tm">${esc(M.C.name)}${M.last === 'C' ? '・最後の攻撃権' : ''}</div><div class="pts">${M.C.score}</div></div></div>
     <div class="mom"><span>${M.P.hot ? '<span class="hot">あなた 流れ</span>' : 'あなた'}</span><span class="dots" role="img" aria-label="流れゲージ">${dots.join('')}</span><span>${M.C.hot ? '<span class="hot">相手 流れ</span>' : '相手'}</span></div></div>`;
 }
 
@@ -1143,19 +1201,21 @@ function bagsHtml(team) {
 }
 
 function readPips(r) { return `<span class="rp" aria-label="読まれ度${r}">${[0, 1, 2, 3, 4, 5].map(k => `<i class="${k < r ? 'on' : ''}"></i>`).join('')}</span>`; }
-function handHtml(team, selId) {
+function handHtml(team, selId, act) {
   return `<div class="hand" role="group" aria-label="作戦カード">${team.deck.map(c => {
     const C = CARDS[c.id];
-    return `<button class="tcard" data-act="card" data-id="${c.id}" aria-pressed="${selId === c.id}"><span class="tn">${C.name}</span><span class="tt ${C.type === 'SET' ? 'set' : ''}">${C.type}</span><span class="tm"><span>読まれ度</span>${readPips(c.read)}${c.read ? `<span class="warn">−${c.read}</span>` : '<span class="fresh">読まれていない</span>'}</span></button>`;
+    return `<button class="tcard" data-act="${act || 'card'}" data-id="${c.id}" aria-pressed="${selId === c.id}"><span class="tn">${C.name}</span><span class="tt ${C.type === 'SET' ? 'set' : ''}">${C.type}</span><span class="tm"><span>読まれ度</span>${readPips(c.read)}${c.read ? `<span class="warn">−${c.read}</span>` : '<span class="fresh">読まれていない</span>'}</span></button>`;
   }).join('')}</div>`;
 }
 
-function chipsHtml(team, act, sel, exclude) {
-  return `<div class="chips">${team.players.map((p, i) => i === exclude ? '' : `<button class="chip" data-act="${act}" data-i="${i}" aria-pressed="${sel === i}"><span class="dot">${p.num}</span><span>${surname(p)}<span class="stb" aria-label="スタミナ${p.st}"><i class="${p.st < 40 ? 'low' : ''}" style="width:${p.st}%"></i></span></span></button>`).join('')}</div>`;
+function hLabel(cardId) { return cardId === 'ho' ? p => (p.s.SHT >= 4 ? '3P' : 'ミドル') : null; }
+function oLabel(cardId) { return cardId === 'pnr' ? p => (p.off.includes('Roller') ? 'ゴール下' : p.off.includes('Spacer') ? '3P' : 'ミドル') : null; }
+function chipsHtml(team, act, sel, exclude, labelFn) {
+  return `<div class="chips">${team.players.map((p, i) => i === exclude ? '' : `<button class="chip" data-act="${act}" data-i="${i}" aria-pressed="${sel === i}"><span class="dot">${p.num}</span><span>${esc(surname(p))}${labelFn ? `<em class="shotlab">→${labelFn(p)}</em>` : ''}<span class="stb" aria-label="スタミナ${p.st}"><i class="${p.st < 40 ? 'low' : ''}" style="width:${p.st}%"></i></span></span></button>`).join('')}</div>`;
 }
 
 function previewRow(att, def, plan) {
-  return `<div class="preview">${STANCE_IDS.map(s => { const e = evalAttack({ att, def, ...plan, stance: s, turn: M.turn, defCardId: null }); return `<div class="pv"><span class="muted">相手が${STANCES[s].short}</span><b class="${QUALITY[e.quality].cls}">${e.quality === 'TO' ? 'ミス' : QUALITY[e.quality].name}</b>${e.quality === 'TO' ? 'TO' : SHOT_NAME[e.shot]}</div>`; }).join('')}</div>`;
+  return `<div class="preview">${STANCE_IDS.map(s => { const e = evalAttack({ att, def, ...plan, stance: s, turn: M.turn, defLag: defLagFor(M, 'C', M.plan.C && M.plan.C.cardId) }); return `<div class="pv"><span class="muted">相手が${STANCES[s].short}</span><b class="${QUALITY[e.quality].cls}">${e.quality === 'TO' ? 'ミス' : QUALITY[e.quality].name}</b>${e.quality === 'TO' ? 'TO' : SHOT_NAME[e.shot]}</div>`; }).join('')}</div>`;
 }
 
 function coachAttack() {
@@ -1163,16 +1223,24 @@ function coachAttack() {
   combos(M.P, M.turn, M.ot > 0).forEach(cb => {
     let mn = 9, avg = 0, worstQ = 'OPEN';
     const rank = { TO: 0, TOUGH: 1, CONTESTED: 2, OPEN: 3 };
-    STANCE_IDS.forEach(st => { const e = evalAttack({ att: M.P, def: M.C, ...cb, stance: st, turn: M.turn, defCardId: null }); const v = evOf(M.P, e); mn = Math.min(mn, v); avg += v / 4; if (rank[e.quality] < rank[worstQ]) worstQ = e.quality; });
+    STANCE_IDS.forEach(st => { const e = evalAttack({ att: M.P, def: M.C, ...cb, stance: st, turn: M.turn, defLag: defLagFor(M, 'C', M.plan.C && M.plan.C.cardId) }); const v = evOf(M.P, e); mn = Math.min(mn, v); avg += v / 4; if (rank[e.quality] < rank[worstQ]) worstQ = e.quality; });
     const sc = mn * 0.6 + avg * 0.4;
     if (!best || sc > best.sc) best = { cb, sc, worstQ };
   });
   return best;
 }
+/* 相手の最善手はターンと局面ごとに1回だけ計算してキャッシュする（選手チップを押すたびの再計算を避ける） */
+function cachedReply(st, myCard) {
+  const lag = defLagFor(M, 'P', myCard);
+  const key = `${M.turn}|${M.ot}|${M.events.length}|${M.phase}|${lag}`;
+  if (!UI.brCache || UI.brCache.key !== key) UI.brCache = { key, map: {} };
+  if (!(st in UI.brCache.map)) UI.brCache.map[st] = bestReply(M.C, M.P, st, M.turn, M.ot > 0, lag);
+  return UI.brCache.map[st];
+}
 function coachStance(myCard) {
   let best = null;
   STANCE_IDS.forEach(st => {
-    const r = bestReply(M.C, M.P, st, M.turn, M.ot > 0, myCard);
+    const r = cachedReply(st, myCard);
     let v = r ? r.ev : 0;
     if (st === 'press') { const avg = M.P.players.reduce((a, p) => a + p.st, 0) / 5; if (avg < 55) v += 0.4; }
     if (!best || v < best.v) best = { st, v, r };
@@ -1197,8 +1265,8 @@ function planView() {
     let a = `<div class="substep"><span class="sn">1</span>作戦をえらぶ<span class="sp"></span><button class="coachbtn" data-act="coachA">コーチのおすすめ</button></div>${UI.coachA ? `<div class="coachnote">${UI.coachA}</div>` : ''}${handHtml(M.P, s.cardId)}`;
     if (C) {
       a += `<p class="small" style="margin:2px 0 0">${C.desc}</p>`;
-      a += `<div class="substep"><span class="sn">2</span>${C.h}</div>${chipsHtml(M.P, 'h', s.h)}`;
-      if (C.o) a += `<div class="substep"><span class="sn">3</span>${C.o}</div>${chipsHtml(M.P, 'o', s.o, s.h)}`;
+      a += `<div class="substep"><span class="sn">2</span>${C.h}</div>${chipsHtml(M.P, 'h', s.h, null, hLabel(s.cardId))}`;
+      if (C.o) a += `<div class="substep"><span class="sn">3</span>${C.o}</div>${chipsHtml(M.P, 'o', s.o, s.h, oLabel(s.cardId))}`;
       if (planComplete() && S.hints) a += `<p class="hint">相手の守備によってシュートの質はこう変わります</p>${previewRow(M.P, M.C, s)}`;
     }
     out += `<section class="phase atk" aria-label="攻め"><div class="phase-h"><span class="pill">攻め</span><h3>あなたの攻撃をどう組み立てる？</h3></div>${a}</section>`;
@@ -1206,7 +1274,7 @@ function planView() {
   if (defStep) {
     out += `<section class="phase def" aria-label="守り"><div class="phase-h"><span class="pill">守り</span><h3>相手の攻撃にどう備える？</h3></div><div class="substep"><span class="sn">1</span>守りの方針をえらぶ<span class="sp"></span><button class="coachbtn def" data-act="coachD">コーチのおすすめ</button></div>${UI.coachD ? `<div class="coachnote def">${UI.coachD}</div>` : ''}<div class="stances" role="group" aria-label="守備スタンス">${STANCE_IDS.map(st => {
       let rep = '';
-      if (S.hints) { const b = bestReply(M.C, M.P, st, M.turn, M.ot > 0, attackStep ? s.cardId : null); if (b) rep = `<span class="rep">相手の最善手：${CARDS[b.cardId].name}→<b class="${QUALITY[b.e.quality].cls}">${QUALITY[b.e.quality].name}</b></span>`; }
+      if (S.hints) { const b = cachedReply(st, attackStep ? s.cardId : null); if (b) rep = `<span class="rep">相手の最善手：${CARDS[b.cardId].name}→<b class="${QUALITY[b.e.quality].cls}">${QUALITY[b.e.quality].name}</b></span>`; }
       return `<button class="stance" data-act="stance" data-v="${st}" aria-pressed="${s.stance === st}"><b>${STANCES[st].name}</b><span>${STANCES[st].desc}</span>${rep}</button>`;
     }).join('')}</div></section>`;
   }
@@ -1217,14 +1285,15 @@ function planView() {
 
 function revealView() {
   const plan = M.plan.P; const cs = M.stance.C;
-  const e = evalAttack({ att: M.P, def: M.C, ...plan, stance: cs, turn: M.turn, defCardId: M.plan.C && M.plan.C.cardId });
+  const e = evalAttack({ att: M.P, def: M.C, ...plan, stance: cs, turn: M.turn, defLag: defLagFor(M, 'C', M.plan.C && M.plan.C.cardId) });
   let out = `<div class="res p"><div class="who">相手の守備は「${STANCES[cs].name}」</div>
    <p class="play">あなたの作戦：${CARDS[plan.cardId].name}（${surname(M.P.players[plan.h])}${plan.o != null ? '→' + surname(M.P.players[plan.o]) : ''}）</p>
    <div class="qline"><span>このままだと</span><span class="qbadge ${QUALITY[e.quality].cls}">${QUALITY[e.quality].name}</span>${e.quality !== 'TO' ? `<span class="muted small">${SHOT_NAME[e.shot]}・成功率 ${Math.round(bagProb(M.P, e.quality) * 100)}%</span>` : ''}</div>`;
   if (M.phase === 'timeout') {
     const C = CARDS[plan.cardId];
-    out += `<div class="callout">タイムアウト中。作戦カードはそのまま、起点と相手役を変えられます。</div>
-    <div class="step">${C.h}</div>${chipsHtml(M.P, 'th', plan.h)}${C.o ? `<div class="step">${C.o}</div>${chipsHtml(M.P, 'to', plan.o, plan.h)}` : ''}
+    out += `<div class="callout">タイムアウト中。相手の守備を見たうえで、作戦カード・起点・相手役を選び直せます。</div>
+    <div class="step">作戦</div>${handHtml(M.P, plan.cardId, 'tcard')}
+    <div class="step">${C.h}</div>${chipsHtml(M.P, 'th', plan.h, null, hLabel(plan.cardId))}${C.o ? `<div class="step">${C.o}</div>${chipsHtml(M.P, 'to', plan.o, plan.h, oLabel(plan.cardId))}` : ''}
     </div><div class="commit"><div class="inner"><button class="btn go block" data-act="goresolve">この形で攻める</button></div></div>`;
   } else {
     out += `</div><div class="commit"><div class="inner row" style="flex-wrap:nowrap">${M.P.timeout ? `<button class="btn ghost" style="flex:1" data-act="timeout">タイムアウト（残り1）</button>` : ''}<button class="btn go" style="flex:1.4" data-act="goresolve">攻める</button></div></div>`;
@@ -1264,7 +1333,7 @@ function eventView(ev) {
   let reb = '';
   if (ev.reb) reb = `<p class="small muted">リバウンド争い：攻撃側 ${ev.reb.o} 対 守備側 ${ev.reb.d}（攻撃側が2以上上回るとオフェンスリバウンド）</p>`;
   const hot = ev.hotGain ? `<div class="callout">${ev.hotGain === 'P' ? 'あなた' : '相手'}に流れが来た！ 次の攻撃は+2</div>` : '';
-  const to = ev.cpuTimeout ? `<div class="callout">相手がタイムアウトを取り、起点を変えてきた</div>` : '';
+  const to = ev.cpuTimeout ? `<div class="callout">相手がタイムアウトを取り、作戦を変えてきた</div>` : '';
   return `<div class="res ${isP ? 'p' : 'c'}"><div class="who">${isP ? 'あなたの攻撃' : '相手の攻撃'}</div>
   ${to}<p class="play">${CARDS[ev.plan.cardId].name}：${surname(hp)}${ev.plan.o != null ? ' → ' + surname(team.players[ev.plan.o]) : ''}<br><span class="muted small">${isP ? '相手' : 'あなた'}の守備：${STANCES[ev.stance].name}</span></p>
   <div class="qline"><span class="qbadge ${QUALITY[e.quality].cls}">${QUALITY[e.quality].name}</span><span class="muted small">合計 ${e.steal ? '−' : e.q}（6以上オープン・3〜5コンテスト・1〜2タフ）</span></div>
@@ -1276,7 +1345,7 @@ function eventView(ev) {
 function teamPanel(T, me) {
   const sh = T.shape;
   const hist = STANCE_IDS.filter(x => T.stanceHist[x]).map(x => `${STANCES[x].short}${T.stanceHist[x]}`).join('・') || 'まだなし';
-  return `<details class="opp ${me ? 'mine' : ''}"><summary>${me ? '自分のチームの情報' : '相手チームの情報'}</summary><div class="inner">
+  return `<details class="opp ${me ? 'mine' : ''}" data-key="${me ? 'mine' : 'opp'}" ${UI.open && UI.open[me ? 'mine' : 'opp'] ? 'open' : ''}><summary>${me ? '自分のチームの情報' : '相手チームの情報'}</summary><div class="inner">
    <div class="shape small" style="margin-bottom:6px"><span>外の脅威 <span class="st">${starStr(sh.gravity)}</span></span><span>連動 <span class="st">${starStr(sh.flow)}</span></span><span>ゴール下 ${sh.crowded ? '<b style="color:var(--bad)">混み合う</b>' : 'すっきり'}</span><span>リバウンド ${sh.reb}</span></div>
    <p class="small muted">これまでの守備：${hist}</p>
    ${T.players.map(p => `<div class="oppp"><span class="dot" style="background:${me ? 'var(--me)' : 'var(--cpu)'}">${p.num}</span><span style="flex:1"><b>${surname(p)}</b> <span class="muted">${p.pos}</span><br>${tagsHtml(p, p.trait)}${miniStats(p)}</span><span class="small" style="text-align:right;white-space:nowrap">体力 <b style="color:${p.st < 40 ? 'var(--bad)' : 'inherit'}">${p.st}</b>${p.st < 40 ? '<br><span style="color:var(--bad)">疲労</span>' : ''}${p.pts ? `<br>${p.pts}点` : ''}</span></div>`).join('')}
@@ -1339,7 +1408,7 @@ function step() {
   let cpuTO = false;
   if (side === 'C') cpuTO = cpuMaybeTimeout(M);
   const o2 = side === 'P' ? 'C' : 'P';
-  const balE = evalAttack({ att: M[side], def: M[o2], ...M.plan[side], stance: 'balance', turn: M.turn, defCardId: M.plan[o2] ? M.plan[o2].cardId : null });
+  const balE = evalAttack({ att: M[side], def: M[o2], ...M.plan[side], stance: 'balance', turn: M.turn, defLag: M[o2].lastCard === 'fiveout' });
   const ev = resolvePossession(M, side);
   ev.balQ = balE.q;
   ev.cpuTimeout = cpuTO;
@@ -1386,7 +1455,7 @@ SCREENS.result = () => {
 /* ---------- editor (evaluation) ---------- */
 SCREENS.edit = () => {
   const cu = S.custom || {};
-  const inp = (key, val, ph, max, type) => `<input class="ein" data-k="${key}" value="${val == null ? '' : val}" placeholder="${ph}" maxlength="${max}" ${type === 'num' ? 'inputmode="numeric" pattern="[0-9]*"' : ''} aria-label="${ph}">`;
+  const inp = (key, val, ph, max, type) => `<input class="ein" data-k="${esc(key)}" value="${esc(val)}" placeholder="${esc(ph)}" maxlength="${max}" ${type === 'num' ? 'inputmode="numeric" pattern="[0-9]*"' : ''} aria-label="${esc(ph)}">`;
   return `<div class="wrap">${topBar('名前の編集（評価用）')}
   <p class="muted small">チーム名・クラブ名・選手名・背番号を自由に変えられます。空欄にすると元の名前に戻ります。能力値や年俸は変わりません。変更はこの端末のブラウザにだけ保存されます。</p>
   <div class="panel"><h3>自分のチーム名</h3>${inp('my', cu.my || '', 'あなた', 20)}</div>
@@ -1452,7 +1521,7 @@ const GLOSSARY = [
     ['シュート', '外からのシュートのうまさ。3Pやキャッチ&シュートで使う。'],
     ['突破', 'ドライブで相手を抜き、ゴール下で決める力。'],
     ['パス', 'パスのうまさ。ピック&ロールやホーンズの起点で使うほか、プレスでボールを奪われにくくなる。'],
-    ['守備', '1対1で相手を止める力。'],
+    ['守備', '1対1で相手を止める力。アイソレーション・ポストアップ・ドライブ系・バックドアのとき、マッチアップ相手の守備がA以上なら−1、C以下なら+1。'],
     ['リバウンド', '外れたシュートを拾う力。上位2人の合計がリバウンド争いに使われる。'],
     ['スタミナ', '疲れにくさ。高いほど体力が減りにくい。'],
     ['S〜D', '能力の評価。Sがいちばん高く、A・B・C・Dの順に低くなる。']
@@ -1474,17 +1543,18 @@ const GLOSSARY = [
     ['ゴール下が混み合う', 'ローラーやシュートの苦手な選手が3人以上いる状態。ドライブやポストアップが−1される。'],
     ['流れゲージ', '得点するか、相手を0点に抑えると自分の側に1つ動く。端まで行くと「流れ」に乗り、次の攻撃が+2される。'],
     ['体力', '試合中に減っていく値。40を切ると疲労状態になり、能力が1下がって、守備タグも効かなくなる。'],
-    ['タイムアウト', '1試合に1回。相手の守備が明かされたあとに、起点と相手役を変えられる。全員の体力も20回復する。'],
-    ['最後の攻撃権', '試合開始時に決まる。持っている側は第6ターンで、相手の攻撃結果を見てから自分の攻め方を選べる。'],
+    ['タイムアウト', '1試合に1回。相手の守備が明かされたあとに、作戦カード・起点・相手役を選び直せる。全員の体力も20回復する。'],
+    ['マッチアップ', '起点の選手を守る相手。ポジションが近い選手の中で、いちばん守備のうまい選手がつく。守備が苦手な相手とのマッチアップ（ミスマッチ）は攻めのチャンス。'],
+    ['最後の攻撃権', '試合開始時に決まる。持っている側は第6ターンだけ、相手の攻撃結果を見てから自分の攻め方を選べる。延長に入るたびに相手に移る。'],
     ['クラッチターン', '第6ターン以降のこと。クラッチなどの特性が働く。'],
-    ['延長', '第6ターン終了時に同点なら、1ターンずつ延長する（最大3回）。'],
+    ['延長', '第6ターン終了時に同点なら、1ターンずつ延長する（最大3回）。延長では攻めと守りを同時に決め、後攻は毎回入れ替わる。'],
     ['年俸', '選手の給料。5人の合計を100以内に収める。'],
     ['スカウト', '持っていない選手を試合に借りること。持っている選手と強さは同じ。'],
     ['モーメント版', 'レアなカード。能力は同じで、特性だけが別のものに変わる。']
   ]}
 ];
 function glossaryHtml(open) {
-  return GLOSSARY.map(g => `<details class="gl" ${open ? 'open' : ''}><summary>${g.cat}</summary><dl>${g.items.map(([t, d]) => `<dt>${t}</dt><dd>${d}</dd>`).join('')}</dl></details>`).join('');
+  return GLOSSARY.map((g, gi) => `<details class="gl" data-key="gl${gi}" ${open || (UI.open && UI.open['gl' + gi]) ? 'open' : ''}><summary>${g.cat}</summary><dl>${g.items.map(([t, d]) => `<dt>${t}</dt><dd>${d}</dd>`).join('')}</dl></details>`).join('');
 }
 SCREENS.glossary = () => `<div class="wrap">${topBar('用語集')}<p class="muted small">見出しをタップすると開きます。</p>${glossaryHtml(false)}</div>`;
 
@@ -1495,8 +1565,9 @@ SCREENS.howto = () => `<div class="wrap howto">${topBar('あそびかた')}
 <h3>2. 作戦カードを5枚えらぶ</h3><p>毎ターン、5枚のうちどれを使ってもかまいません。ただし、使った作戦は相手に「読まれ度」が2たまり、次に使うとその分だけシュートの質が下がります。使わなかったターンの終わりに読まれ度は1ずつ減っていきます。同じ作戦を続けるとすぐに止められてしまうので、別の作戦をはさみながら、ここぞという場面で得意な作戦を使いましょう。</p>
 <h3>3. 毎ターン、攻めと守りを同時に決める</h3><p>作戦カード、起点の選手、相手役を決め、同時に「相手の攻撃をどう守るか」も決めます。相手も同じタイミングで決めています。</p>
 <p>守りの方針は「正解を当てる」ものではなく「何を捨てるか」を決めるもの。インサイド警戒はゴール下に強いぶん3Pを許し、外郭警戒はその逆です。</p>
+<p>起点の選手には、相手の中でポジションが近い、いちばん守備のうまい選手がつきます（マッチアップ）。相手の守備がC以下ならチャンス（+1）、A以上なら手ごわい（−1）です。守備の苦手な選手を狙う「ミスマッチ」を探しましょう。</p>
 <h3>4. シュートの質とチップ袋</h3><p>作戦と守備の相性、読まれ度などでシュートの質が「オープン・コンテスト・タフ」に決まります。ここに運は入りません。</p><p>成否はそれぞれの袋からチップを引いて決めます。引いたチップは戻らないので、外れが続けば、残りは当たりが濃くなります。袋の中身はいつでも見られます。</p>
-<h3>5. 流れ・タイムアウト・最後の攻撃</h3><p>得点や守備の成功で流れゲージが動き、端まで行くと次の攻撃が+2。タイムアウトは1試合1回。相手の守備を見たあとに、起点と相手役を変えられます。</p><p>試合の最初に「最後の攻撃権」がどちらにあるか決まります。持っている側は第6ターンで、相手の結果を見てから攻め方を選べます。</p>
+<h3>5. 流れ・タイムアウト・最後の攻撃</h3><p>得点や守備の成功で流れゲージが動き、端まで行くと次の攻撃が+2。タイムアウトは1試合1回。相手の守備を見たあとに、作戦カード・起点・相手役を選び直せます。</p><p>試合の最初に「最後の攻撃権」がどちらにあるか決まります。持っている側は第6ターンで、相手の結果を見てから攻め方を選べます。延長に入ると、最後の攻撃権は相手に移ります。</p>
 <h3>ヒント</h3><p>ヒント表示ありにすると、相手の守備ごとに自分の攻撃がどうなるか、相手の最善手が何かが見えます。慣れたらヒントなしにすると、もっと読み合いになります。</p>
 <div class="menu" style="margin-top:20px"><button class="btn go block" data-go="team">試合をする</button><button class="btn ghost block" data-go="glossary">用語集を見る</button></div></div>`;
 
@@ -1571,14 +1642,16 @@ app.addEventListener('click', ev => {
     case 'coachA': { const b = coachAttack(); if (b) { UI.sel.cardId = b.cb.cardId; UI.sel.h = b.cb.h; UI.sel.o = b.cb.o; const C = CARDS[b.cb.cardId]; const hp = M.P.players[b.cb.h]; UI.coachA = `<b>${C.name}</b>（${surname(hp)}${b.cb.o != null ? '→' + surname(M.P.players[b.cb.o]) : ''}）。相手がどの守備を選んでも<b>${QUALITY[b.worstQ].name}</b>以上になる、読み負けに強い手です。`; } render(); break; }
     case 'coachD': { const b = coachStance(playerLate() && M.phase === 'plan' ? null : UI.sel.cardId); UI.sel.stance = b.st; UI.coachD = `<b>${STANCES[b.st].name}</b>。相手がいちばん得意な攻め（${b.r ? CARDS[b.r.cardId].name : '—'}）でも、ほかの守り方より点を取られにくくなります。`; render(); break; }
     case 'timeout': M.P.timeout = 0; M.P.players.forEach(p => (p.st = Math.min(100, p.st + 20))); M.phase = 'timeout'; render(); break;
+    case 'tcard': { const p0 = M.plan.P; p0.cardId = id; const C = CARDS[id]; if (C.o) { if (p0.o == null || p0.o === p0.h) p0.o = M.P.players.findIndex((_, i) => i !== p0.h); } else p0.o = null; render(); break; }
     case 'th': M.plan.P.h = +t.dataset.i; if (M.plan.P.o === M.plan.P.h) { M.plan.P.o = M.P.players.findIndex((_, i) => i !== M.plan.P.h); } render(); break;
     case 'to': M.plan.P.o = +t.dataset.i; render(); break;
     case 'goresolve': M.phase = 'go'; step(); break;
     case 'next': M.queue.shift(); step(); break;
     case 'quit': if (confirm('試合をやめますか？（記録には残りません）')) { M = null; view = 'home'; render(); } break;
-    case 'reset': if (confirm('コレクションと成績をすべて消して、最初からにしますか？')) { S = structuredClone(DEFAULT_SAVE); save(); view = 'home'; render(); } break;
+    case 'reset': if (confirm('コレクションと成績をすべて消して、最初からにしますか？')) { S = { ...clone(DEFAULT_SAVE), v: SAVE_VERSION }; save(); view = 'home'; render(); } break;
   }
 });
+app.addEventListener('toggle', e => { const d = e.target; if (d && d.tagName === 'DETAILS' && d.dataset.key) { UI.open = UI.open || {}; UI.open[d.dataset.key] = d.open; } }, true);
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && modal) { modal = null; render(); } });
 
 function toast(msg) { let t = document.getElementById('toast'); if (!t) { t = document.createElement('div'); t.id = 'toast'; t.setAttribute('role', 'status'); document.body.appendChild(t); } t.textContent = msg; t.classList.add('show'); clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove('show'), 1800); }
